@@ -1,10 +1,10 @@
-from src.INE5417.logic.stone import Stone
+from .stone import Stone
 
 
 class Triangle:
     def __init__(self):
         self.border_stones: list[Stone] = []
-        self.stone: Stone | None  = None
+        self.stone: Stone | None = None
 
     def get_stone(self):
         return self.stone
