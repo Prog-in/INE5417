@@ -1,9 +1,6 @@
-from src.INE5417.utils.player_color import PlayerColor
-
-
 class Stone:
-    def __init__(self, color: PlayerColor, i: int):
-        self.color: PlayerColor = color
+    def __init__(self, color: str, i: int):
+        self.color: str = color
         self.value: int = i
 
     def get_value(self) -> int:
