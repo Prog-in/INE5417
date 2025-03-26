@@ -29,6 +29,9 @@ class Player:
     def get_id(self) -> str:
         return self.id
 
+    def get_color(self) -> str:
+        return self.color
+
     def get_turn(self) -> bool:
         return self.turn
 
@@ -39,7 +42,8 @@ class Player:
         self.winner = True
 
     def get_stone(self, value: int) -> Stone | None:
-        try:
-            return self.stones[value].pop()
-        except IndexError:
-            return None
+        return None if len(self.stones[value]) == 0 else self.stones[value][-1]
+
+    def remove_stone(self, value: int) -> None:
+        if len(self.stones[value]) > 0:
+            self.stones[value].pop()
