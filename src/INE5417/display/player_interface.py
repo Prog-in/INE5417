@@ -29,7 +29,6 @@ class PlayerInterface(DogPlayerInterface):
         self.board: Board = Board()
         self.assets: dict[str, ImageTk.PhotoImage] = self.load_assets()
         self.stone_buttons: dict[str, ttk.Button] = {}
-        self.stone_buttons_state: str = tk.DISABLED
         self.populate_window()
         self.menu_file: tk.Menu = self.initialize_menubar()
         # self.player_name: str = self.get_player_name()
@@ -104,18 +103,18 @@ class PlayerInterface(DogPlayerInterface):
             BOARD_WIDTH // 2, BOARD_HEIGHT // (2 - 0.15), image=self.assets["board"]
         )
         circles_coordinates = (
-            (150, 100),
-            (151, 100),
-            (152, 100),
-            (153, 100),
-            (154, 100),
-            (155, 100),
-            (156, 100),
-            (157, 100),
-            (158, 100),
-            (159, 100),
+            (100, 100),
+            (120, 100),
+            (140, 100),
             (160, 100),
-            (161, 100),
+            (180, 100),
+            (200, 100),
+            (220, 100),
+            (240, 100),
+            (260, 100),
+            (280, 100),
+            (300, 100),
+            (320, 100),
         )
         for i in range(12):
             x, y = circles_coordinates[i]
@@ -135,28 +134,28 @@ class PlayerInterface(DogPlayerInterface):
                 game_frame,
                 image=self.assets[f"{COLOR_A}{i}"],
                 command=lambda: self.stone_selected(COLOR_A, i),
-                state=self.stone_buttons_state,
+                state=tk.DISABLED,
                 style="flat.TButton",
             )
             button_stone_color_a_2 = ttk.Button(
                 game_frame,
                 image=self.assets[f"{COLOR_A}{i}"],
                 command=lambda: self.stone_selected(COLOR_A, i),
-                state=self.stone_buttons_state,
+                state=tk.DISABLED,
                 style="flat.TButton",
             )
             button_stone_color_b_1 = ttk.Button(
                 game_frame,
                 image=self.assets[f"{COLOR_B}{i}"],
                 command=lambda: self.stone_selected(COLOR_B, i),
-                state=self.stone_buttons_state,
+                state=tk.DISABLED,
                 style="flat.TButton",
             )
             button_stone_color_b_2 = ttk.Button(
                 game_frame,
                 image=self.assets[f"{COLOR_B}{i}"],
                 command=lambda: self.stone_selected(COLOR_B, i),
-                state=self.stone_buttons_state,
+                state=tk.DISABLED,
                 style="flat.TButton",
             )
             self.stone_buttons[COLOR_A + str(i) + ".1"] = button_stone_color_a_1
@@ -210,25 +209,22 @@ class PlayerInterface(DogPlayerInterface):
         message = self.dog.initialize(self.player_name, self) + "."
         # messagebox.showinfo(title="Dog Server", message=message)
 
-    def update_circle_image(self, index: int, asset_name: str) -> None:
-        self.canvas_board.itemconfig(f"circle{index}", image=self.assets[f"{asset_name}"])
-
-    def update_circle_visibility(self, index: int, state: str) -> None:
-        self.canvas_board.itemconfig(f"circle{index}", state=state)
-
-    def stone_selected(self, color: str, stone_number: int) -> None:
+    def stone_selected(self, color: str, stone_value: int) -> None:
         game_state = self.board.get_game_state()
         if game_state == GameState.PLAYER_MOVE_1 or GameState.PLAYER_MOVE_2:
-            valid_circles = self.board.stone_selected(color, stone_number)
+            valid_circles = self.board.stone_selected(color, stone_value)
+            print("valid circles: ", valid_circles)
             for circle_index in valid_circles:
                 self.update_circle_visibility(circle_index, tk.NORMAL)
             updated_board = self.board.get_board()
             self.update_gui(updated_board)
 
     def circle_selected(self, circle_id: int) -> None:
-        self.board.triangle_selected(circle_id)
         # TODO: enviar os dados referentes à jogada do outro jogador em send_move
-        self.dog.send_move(...)
+        move_to_send = self.board.triangle_selected(circle_id)
+        print(move_to_send)
+        self.dog.send_move(move_to_send)
+        self.update_stone_state(move_to_send["stone_color"], int(move_to_send["stone_value"]), tk.HIDDEN)
 
     def start_game(self) -> None:
         game_state = self.board.get_game_state()
@@ -248,6 +244,7 @@ class PlayerInterface(DogPlayerInterface):
         self.update_gui(updated_board)
 
     def receive_move(self, a_move) -> None:
+        print("received move:", a_move)
         self.board.receive_move(a_move)
         updated_board = self.board.get_board()
         self.update_gui(updated_board)
@@ -276,21 +273,33 @@ class PlayerInterface(DogPlayerInterface):
 
     def update_game_state(self) -> None: ...
 
-    def update_stone_buttons_state(self) -> None:
+    def update_circle_image(self, index: int, asset_name: str) -> None:
+        self.canvas_board.itemconfig(f"circle{index}", image=self.assets[f"{asset_name}"])
+
+    def update_circle_visibility(self, index: int, state: str) -> None:
+        self.canvas_board.itemconfig(f"circle{index}", state=state)
+
+    def update_stone_state(self, stone_color: str, stone_value: int, state: str) -> None:
+        stone_button = self.stone_buttons[stone_color + str(stone_value) + ".2"]
+        if stone_button.cget("state") != state:
+            stone_button.configure(state=state)
+        else:
+            stone_button = self.stone_buttons[stone_color + str(stone_value) + ".1"]
+            stone_button.configure(state=state)
+        stone_button.update()
+
+    def update_stones(self) -> None:
         game_state = self.board.get_game_state()
         if (
             game_state == GameState.TITLE
             or game_state == GameState.MATCH_ENDED
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
-            self.stone_buttons_state = tk.DISABLED
+            stone_buttons_state = tk.DISABLED
         else:
-            self.stone_buttons_state = tk.NORMAL
-
-    def update_stones(self) -> None:
-        self.update_stone_buttons_state()
+            stone_buttons_state = tk.NORMAL
         for button in self.stone_buttons.values():
-            button.configure(state=self.stone_buttons_state)
+            button.configure(state=stone_buttons_state)
             button.update()
 
     def update_message_label(self) -> None:

@@ -14,6 +14,8 @@ class Board:
         self.remote_player: Player = Player(colors[1])
         self.game_state: GameState = GameState.TITLE
         self.regular_move: bool = True
+        self.last_positioned_stone: Stone | None = None
+        self.selected_stone: Stone | None = None
         self.triangles: list[Triangle] = self.initialize_triagles()
 
     def get_colors(self) -> list[str]:
@@ -30,15 +32,37 @@ class Board:
         self.remote_player: Player = Player(colors[1])
         self.triangles = self.initialize_triagles()
 
-    def stone_selected(self, stone_color: str, stone_number: int) -> list[int]:
-        # TODO: implementar lógica de verificação de triângulos válidos e retorná-los (não remover a pedra do jogador
-        #  ainda)
-        return [0]
+    def stone_selected(self, stone_color: str, stone_value: int) -> list[int]:
+        player = self.local_player if stone_color == self.local_player.get_color() else self.remote_player
+        self.selected_stone = player.get_stone(stone_value)
+        if self.last_positioned_stone is None:  # primeiro move
+            self.last_positioned_stone = self.selected_stone
+            return list(range(12))
+        else:  # moves posteriores
+            # TODO: esquematizar uma forma relação direta entre a pedra posicionada anteriormente e seu triângulo
+            last_positioned_stones_triangle_index = 0  # apenas para o analisador sintático não reclamar de variável sem valor
+            for i, triangle in enumerate(self.triangles):
+                if triangle.get_stone() == self.last_positioned_stone:
+                    last_positioned_stones_triangle_index = i
+                    break
+            possible_triangles_indexes = [
+                (last_positioned_stones_triangle_index - stone_value) % 12,
+                (last_positioned_stones_triangle_index + stone_value) % 12
+            ]
+            return [i for i in possible_triangles_indexes if self.triangles[i].get_stone() is None]
 
-    def triangle_selected(self, triangle_index: int):
+
+    def triangle_selected(self, triangle_index: int) -> dict[str, str]:
         # TODO: implementar cadeia de execuções para o caso de um triângulo válido ser selecionado (remover a pedra do
         #  jogador apenas nesse passo)
-        ...
+        move_to_send = {
+            "move_type": "placing",
+            "triangle_index": str(triangle_index),
+            "stone_color": self.selected_stone.get_color(),
+            "stone_value": str(self.selected_stone.get_value()),
+            "match_status": "next"  # dog key-value
+        }
+        return move_to_send
 
     def receive_move(self, a_move):
         if self.game_state == GameState.WAITING_OTHER_PLAYER:
