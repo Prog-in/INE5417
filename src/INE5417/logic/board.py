@@ -35,8 +35,8 @@ class Board:
     def stone_selected(self, stone_color: str, stone_value: int) -> list[int]:
         player = self.local_player if stone_color == self.local_player.get_color() else self.remote_player
         self.selected_stone = player.get_stone(stone_value)
+        print("pedra selecionada", self.selected_stone.get_value())
         if self.last_positioned_stone is None:  # primeiro move
-            self.last_positioned_stone = self.selected_stone
             return list(range(12))
         else:  # moves posteriores
             # TODO: esquematizar uma forma relação direta entre a pedra posicionada anteriormente e seu triângulo
@@ -45,16 +45,22 @@ class Board:
                 if triangle.get_stone() == self.last_positioned_stone:
                     last_positioned_stones_triangle_index = i
                     break
-            possible_triangles_indexes = [
-                (last_positioned_stones_triangle_index - stone_value) % 12,
-                (last_positioned_stones_triangle_index + stone_value) % 12
-            ]
-            return [i for i in possible_triangles_indexes if self.triangles[i].get_stone() is None]
+            if stone_value > 0:
+                possible_triangles_indexes = [
+                    (last_positioned_stones_triangle_index - stone_value) % 12,
+                    (last_positioned_stones_triangle_index + stone_value) % 12
+                ]
+                return [i for i in possible_triangles_indexes if self.triangles[i].get_stone() is None]
+            else:
+                # TODO: tratar caso especial da pedra zero
+                return []
 
 
     def triangle_selected(self, triangle_index: int) -> dict[str, str]:
         # TODO: implementar cadeia de execuções para o caso de um triângulo válido ser selecionado (remover a pedra do
         #  jogador apenas nesse passo)
+        self.last_positioned_stone = self.selected_stone
+        self.local_player.remove_stone(self.selected_stone.get_value())
         move_to_send = {
             "move_type": "placing",
             "triangle_index": str(triangle_index),

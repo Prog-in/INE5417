@@ -42,4 +42,8 @@ class Player:
         self.winner = True
 
     def get_stone(self, value: int) -> Stone | None:
-        return None if len(self.stones[value]) == 0 else self.stones[value].pop()
+        return None if len(self.stones[value]) == 0 else self.stones[value][-1]
+
+    def remove_stone(self, value: int) -> None:
+        if len(self.stones[value]) > 0:
+            self.stones[value].pop()

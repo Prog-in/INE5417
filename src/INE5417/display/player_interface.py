@@ -133,28 +133,28 @@ class PlayerInterface(DogPlayerInterface):
             button_stone_color_a_1 = ttk.Button(
                 game_frame,
                 image=self.assets[f"{COLOR_A}{i}"],
-                command=lambda: self.stone_selected(COLOR_A, i),
+                command=lambda index=i: self.stone_selected(COLOR_A, index),
                 state=tk.DISABLED,
                 style="flat.TButton",
             )
             button_stone_color_a_2 = ttk.Button(
                 game_frame,
                 image=self.assets[f"{COLOR_A}{i}"],
-                command=lambda: self.stone_selected(COLOR_A, i),
+                command=lambda index=i: self.stone_selected(COLOR_A, index),
                 state=tk.DISABLED,
                 style="flat.TButton",
             )
             button_stone_color_b_1 = ttk.Button(
                 game_frame,
                 image=self.assets[f"{COLOR_B}{i}"],
-                command=lambda: self.stone_selected(COLOR_B, i),
+                command=lambda index=i: self.stone_selected(COLOR_B, index),
                 state=tk.DISABLED,
                 style="flat.TButton",
             )
             button_stone_color_b_2 = ttk.Button(
                 game_frame,
                 image=self.assets[f"{COLOR_B}{i}"],
-                command=lambda: self.stone_selected(COLOR_B, i),
+                command=lambda index=i: self.stone_selected(COLOR_B, index),
                 state=tk.DISABLED,
                 style="flat.TButton",
             )
@@ -287,6 +287,7 @@ class PlayerInterface(DogPlayerInterface):
             stone_button = self.stone_buttons[stone_color + str(stone_value) + ".1"]
             stone_button.configure(state=state)
         stone_button.update()
+        print(stone_color, stone_value, state)
 
     def update_stones(self) -> None:
         game_state = self.board.get_game_state()
