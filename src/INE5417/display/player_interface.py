@@ -124,7 +124,7 @@ class PlayerInterface(DogPlayerInterface):
             self.canvas_board.tag_bind(
                 button_triangle,
                 "<ButtonRelease-1>",
-                lambda event: self.circle_selected(i),
+                lambda event, index=i: self.circle_selected(index),
             )
 
         self.canvas_board.grid(row=0, column=2, sticky=tk.NSEW, rowspan=6)
