@@ -9,27 +9,30 @@ from ..utils.game_state import GameState
 
 class Board:
     def __init__(self) -> None:
-        colors = self.get_colors()
-        self.local_player: Player = Player(colors[0])
-        self.remote_player: Player = Player(colors[1])
+        # deve ser fixo pois, no caso de variável, deveria haver uma comunicação entre as instâncias do jogo
+        # para acertar qual cor cada jogador usaria.
+        self.local_player: Player = Player(COLOR_A)
+        self.remote_player: Player = Player(COLOR_B)
         self.game_state: GameState = GameState.TITLE
         self.regular_move: bool = True
         self.last_positioned_stone: Stone | None = None
         self.selected_stone: Stone | None = None
         self.triangles: list[Triangle] = self.initialize_triagles()
 
-    def get_colors(self) -> list[str]:
-        colors = [COLOR_A, COLOR_B]
-        random.shuffle(colors)
-        return colors
+    # def get_random_colors(self) -> list[str]:
+    #     colors = [COLOR_A, COLOR_B]
+    #     random.shuffle(colors)
+    #     return colors
+
+    def get_players_colors(self):
+        return self.local_player.get_color(), self.remote_player.get_color()
 
     def initialize_triagles(self) -> list[Triangle]:
         return [Triangle() for _ in range(12)]
 
     def reset_game(self):
-        colors = self.get_colors()
-        self.local_player: Player = Player(colors[0])
-        self.remote_player: Player = Player(colors[1])
+        self.local_player: Player = Player(self.local_player.get_color())
+        self.remote_player: Player = Player(self.remote_player.get_color())
         self.triangles = self.initialize_triagles()
 
     def stone_selected(self, stone_color: str, stone_value: int) -> list[int]:
@@ -102,16 +105,13 @@ class Board:
         self.remote_player.toggle_turn()
         return player
 
-    def get_board(self) -> list[tuple[tuple[str, str] | None, list[tuple[str, str]]]]:
+    def get_board(self) -> list[tuple[tuple[str, str] | None, tuple[str, str] | None]]:
         board = []
         for triangle in self.triangles:
             board.append(
                 (
                     self.stone_to_tuple(triangle.stone) if triangle.stone else None,
-                    [
-                        self.stone_to_tuple(border_stone)
-                        for border_stone in triangle.border_stones
-                    ],
+                    self.stone_to_tuple(triangle.border_stone) if triangle.border_stone else None,
                 )
             )
         return board
