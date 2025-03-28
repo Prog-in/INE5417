@@ -7,6 +7,7 @@ from PIL import ImageTk, Image
 from ..dog.dog_actor import DogActor
 from ..dog.dog_interface import DogPlayerInterface
 from ..logic.board import Board
+from ..utils.assets_set import AssetsSet
 from ..utils.constants import (
     GAME_NAME,
     WINDOW_WIDTH,
@@ -26,9 +27,12 @@ class PlayerInterface(DogPlayerInterface):
     def __init__(self) -> None:
         super().__init__()
         self.root: tk.Tk = tk.Tk()
+        self.assets_set: AssetsSet = AssetsSet.DEFAULT
         self.board: Board = Board()
-        self.assets: dict[str, ImageTk.PhotoImage] = self.load_assets()
+        self.assets: dict[str, ImageTk.PhotoImage] = {}
         self.stone_buttons: dict[str, ttk.Button] = {}
+        self.main_frame: tk.Frame | None = None
+        self.load_assets()
         self.populate_window()
         self.menu_file: tk.Menu = self.initialize_menubar()
         # self.player_name: str = self.get_player_name()
@@ -43,16 +47,29 @@ class PlayerInterface(DogPlayerInterface):
             return name
         return "User"
 
+    def get_assets_subdirectory(self) -> str:
+        if self.assets_set == AssetsSet.ALTERNATIVE:
+            return "alternative"
+        return "default"
+
     def load_asset(
         self, asset_name: str, extension: str, dimensions: tuple[int, int]
     ) -> ImageTk.PhotoImage:
-        asset_file = RESOURCES_DIR / f"{asset_name}.{extension}"
+        asset_file = RESOURCES_DIR / self.get_assets_subdirectory() / f"{asset_name}.{extension}"
         asset_image = Image.open(asset_file).resize((dimensions[0], dimensions[1]))
         return ImageTk.PhotoImage(asset_image)
 
-    def load_assets(self) -> dict[str, tk.PhotoImage]:
+    def load_assets(self) -> None:
         assets = {}
         extension = "png"
+
+        assets["menu_image"] = self.load_asset(
+            "menu_image", extension, (WINDOW_WIDTH, WINDOW_HEIGHT)
+        )
+
+        assets["menu_button"] = self.load_asset(
+            "menu_button", extension, (WINDOW_WIDTH // 4, BOARD_HEIGHT // 5)
+        )
 
         assets["board"] = self.load_asset(
             "board", extension, (BOARD_WIDTH, BOARD_HEIGHT)
@@ -71,36 +88,43 @@ class PlayerInterface(DogPlayerInterface):
                     extension,
                     (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)),
                 )
+        self.assets = assets
 
-        return assets
+    def initialize_player_stone_frame(self, player_color: str, frame_parent: tk.Widget, text: str) -> tk.Frame:
+        player_stones_frame = ttk.Frame(frame_parent, relief=tk.SOLID, borderwidth=2)
+        text_label = ttk.Label(player_stones_frame, text=text)
+        text_label.grid(column=0, row=0, columnspan=2, pady=1)
 
-    def populate_window(self) -> None:
-        s = ttk.Style(self.root)
-        s.theme_use("clam")
-        s.configure("flat.TButton", borderwidth=0, bg="")
-        self.root.title(GAME_NAME)
-        self.root.geometry(WINDOW_GEOMETRY)
-        self.root.resizable(False, False)
-        # self.root.iconbitmap()
+        for i in range(6):
+            button_stone_1 = ttk.Button(
+                player_stones_frame,
+                image=self.assets[f"{player_color}{i}"],
+                command=lambda index=i: self.stone_selected(player_color, index),
+                state=tk.DISABLED,
+                style="flat.TButton",
+            )
+            button_stone_2 = ttk.Button(
+                player_stones_frame,
+                image=self.assets[f"{player_color}{i}"],
+                command=lambda index=i: self.stone_selected(player_color, index),
+                state=tk.DISABLED,
+                style="flat.TButton",
+            )
+            self.stone_buttons[player_color + str(i) + ".1"] = button_stone_1
+            self.stone_buttons[player_color + str(i) + ".2"] = button_stone_2
+            button_stone_1.grid(row=i+1, column=0, padx=0, pady=0)
+            button_stone_2.grid(row=i+1, column=1, padx=0, pady=0)
 
-        # logo_frame = ttk.Frame(self.root)
-        # logo_frame.pack(fill=tk.X, side = tk.TOP, expand=True)
+        return player_stones_frame
 
+    def initialize_game_frame(self) -> ttk.Frame:
         game_frame = ttk.Frame(self.root)
-        game_frame.pack(fill=tk.X, side=tk.TOP, expand=True)
-
-        message_frame = ttk.Frame(self.root)
-        message_frame.pack(fill=tk.BOTH, side=tk.TOP, expand=False)
-
-        # Setting the image of the logo inside the frame for the logo
-        # logo = tk.PhotoImage(file="images/logo.png")
-        # ttk.Label(self.logo_frame, image=self.logo).grid(row=0, column=0)
 
         self.canvas_board = tk.Canvas(
             game_frame, width=BOARD_WIDTH, height=BOARD_HEIGHT
         )
         self.canvas_board.create_image(
-            BOARD_WIDTH // 2, BOARD_HEIGHT // (2 - 0.15), image=self.assets["board"]
+            BOARD_WIDTH // 2, BOARD_HEIGHT // (2 - 0.15), image=self.assets["board"], tags="board"
         )
         circles_coordinates = (
             (100, 100),
@@ -127,49 +151,79 @@ class PlayerInterface(DogPlayerInterface):
                 lambda event, index=i: self.circle_selected(index),
             )
 
-        self.canvas_board.grid(row=0, column=2, sticky=tk.NSEW, rowspan=6)
+        local_player_color, remote_player_color = self.board.get_players_colors()
+        local_player_stones_frame = self.initialize_player_stone_frame(local_player_color, game_frame, "Peças do jogador local")
+        remote_player_stones_frame = self.initialize_player_stone_frame(remote_player_color, game_frame, "Peças do jogador remoto")
 
-        for i in range(6):
-            button_stone_color_a_1 = ttk.Button(
-                game_frame,
-                image=self.assets[f"{COLOR_A}{i}"],
-                command=lambda index=i: self.stone_selected(COLOR_A, index),
-                state=tk.DISABLED,
-                style="flat.TButton",
-            )
-            button_stone_color_a_2 = ttk.Button(
-                game_frame,
-                image=self.assets[f"{COLOR_A}{i}"],
-                command=lambda index=i: self.stone_selected(COLOR_A, index),
-                state=tk.DISABLED,
-                style="flat.TButton",
-            )
-            button_stone_color_b_1 = ttk.Button(
-                game_frame,
-                image=self.assets[f"{COLOR_B}{i}"],
-                command=lambda index=i: self.stone_selected(COLOR_B, index),
-                state=tk.DISABLED,
-                style="flat.TButton",
-            )
-            button_stone_color_b_2 = ttk.Button(
-                game_frame,
-                image=self.assets[f"{COLOR_B}{i}"],
-                command=lambda index=i: self.stone_selected(COLOR_B, index),
-                state=tk.DISABLED,
-                style="flat.TButton",
-            )
-            self.stone_buttons[COLOR_A + str(i) + ".1"] = button_stone_color_a_1
-            self.stone_buttons[COLOR_A + str(i) + ".2"] = button_stone_color_a_2
-            self.stone_buttons[COLOR_B + str(i) + ".1"] = button_stone_color_b_1
-            self.stone_buttons[COLOR_B + str(i) + ".2"] = button_stone_color_b_2
-            button_stone_color_a_1.grid(row=i, column=0, sticky=tk.W, padx=0, pady=0)
-            button_stone_color_a_2.grid(row=i, column=1, sticky=tk.W, padx=0, pady=0)
-            button_stone_color_b_1.grid(row=i, column=3, sticky=tk.E, padx=0, pady=0)
-            button_stone_color_b_2.grid(row=i, column=4, sticky=tk.E, padx=0, pady=0)
+        local_player_stones_frame.grid(row=0, column=0)
+        self.canvas_board.grid(row=0, column=1, sticky=tk.NS)
+        remote_player_stones_frame.grid(row=0, column=2)
 
+        return game_frame
+
+    def initialize_main_menu(self) -> ttk.Frame:
+        menu_frame = ttk.Frame(self.root)
+        menu_canvas = tk.Canvas(menu_frame, width=WINDOW_WIDTH, height=WINDOW_HEIGHT)
+        menu_canvas.create_image(
+            WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2, image=self.assets["menu_image"]
+        )
+        menu_button = menu_canvas.create_image(
+            WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2, image=self.assets["menu_button"]
+        )
+        menu_canvas.tag_bind(
+            menu_button,
+            "<ButtonRelease-1>",
+            #lambda event: self.start_game(),
+            lambda event: self.start_match()
+        )
+        menu_canvas.grid(row=0, column=0, sticky=tk.NSEW)
+
+        return menu_frame
+
+    def populate_window(self) -> None:
+        s = ttk.Style(self.root)
+        s.theme_use("clam")
+        s.configure("flat.TButton", borderwidth=0, bg="")
+        self.root.title(GAME_NAME)
+        self.root.geometry(WINDOW_GEOMETRY)
+        self.root.resizable(False, False)
+        # self.root.iconbitmap()
+
+        # logo_frame = ttk.Frame(self.root)
+        # logo_frame.pack(fill=tk.X, side = tk.TOP, expand=True)
+
+        # Setting the image of the logo inside the frame for the logo
+        # logo = tk.PhotoImage(file="images/logo.png")
+        # ttk.Label(self.logo_frame, image=self.logo).grid(row=0, column=0)
+
+        self.set_main_frame(self.initialize_main_menu())
+
+        message_frame = ttk.Frame(self.root)
         self.message_label = ttk.Label(message_frame, font=FONT)
         self.update_message_label()
         self.message_label.grid(row=0, column=1)
+
+        self.main_frame.pack(fill=tk.X, side=tk.TOP, anchor=tk.CENTER, expand=True)
+        message_frame.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False)
+
+    def update_all_images(self):
+        for button_name, stone_button in self.stone_buttons.items():
+            asset_name = button_name[:-2]
+            stone_button.configure(image=self.assets[asset_name])
+            stone_button.update()
+        for i in range(12):
+            self.canvas_board.itemconfig("circle" + str(i), image=self.assets["circle"])
+        self.canvas_board.itemconfig("board", image=self.assets["board"])
+
+    def switch_assets_set(self):
+        if not self.board.get_game_state() == GameState.TITLE:
+            return
+        if self.assets_set == AssetsSet.DEFAULT:
+            self.assets_set = AssetsSet.ALTERNATIVE
+        else:
+            self.assets_set = AssetsSet.DEFAULT
+        self.load_assets()
+        self.update_all_images()
 
     def initialize_menubar(self) -> tk.Menu:
         menubar = tk.Menu(self.root)
@@ -179,19 +233,19 @@ class PlayerInterface(DogPlayerInterface):
         menu_file = tk.Menu(menubar, bg="#FFFFFF")
         menubar.add_cascade(menu=menu_file, label="Menu")
 
-        # menu_file.add_command(label="Regras", command= self.rules_window_child,
-        #                            activebackground="#A7CCE7", activeforeground="#000")
         menu_file.add_command(
-            label="Iniciar partida",
-            command=self.start_match,
+            label="Voltar ao menu principal",
+            command=self.go_to_main_menu,
             activebackground="#A7CCE7",
             activeforeground="#000",
+            state=tk.DISABLED
         )
         menu_file.add_command(
-            label="Reiniciar jogo",
-            command=self.start_game,
+            label="Trocar conjunto de imagens",
+            command=self.switch_assets_set,
             activebackground="#A7CCE7",
             activeforeground="#000",
+            state=tk.DISABLED
         )
         menu_file.add_separator()
         menu_file.add_command(
@@ -211,7 +265,7 @@ class PlayerInterface(DogPlayerInterface):
 
     def stone_selected(self, color: str, stone_value: int) -> None:
         game_state = self.board.get_game_state()
-        if game_state == GameState.PLAYER_MOVE_1 or GameState.PLAYER_MOVE_2:
+        if game_state == GameState.PLAYER_MOVE_1 or game_state == GameState.PLAYER_MOVE_2:
             valid_circles = self.board.stone_selected(color, stone_value)
             print("valid circles: ", valid_circles)
             for circle_index in valid_circles:
@@ -228,10 +282,11 @@ class PlayerInterface(DogPlayerInterface):
 
     def start_game(self) -> None:
         game_state = self.board.get_game_state()
-        if (
-            game_state == GameState.MATCH_ENDED
+        if (game_state == GameState.TITLE
+            or game_state == GameState.MATCH_ENDED
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
+            self.set_main_frame(self.initialize_game_frame())
             self.board.reset_game()
             updated_board = self.board.get_board()
             self.update_gui(updated_board)
@@ -254,6 +309,13 @@ class PlayerInterface(DogPlayerInterface):
         updated_board = self.board.get_board()
         self.update_gui(updated_board)
 
+    def set_main_frame(self, new_frame: tk.Frame) -> None:
+        if self.main_frame is not None:
+            self.main_frame.destroy()
+        self.main_frame = new_frame
+        self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
+
+
     def start_match(self) -> None:
         game_state = self.board.get_game_state()
         if game_state == GameState.TITLE:
@@ -265,11 +327,17 @@ class PlayerInterface(DogPlayerInterface):
                 if code == "0" or code == "1":
                     messagebox.showinfo(title=GAME_NAME, message=message)
                 else:
+                    self.set_main_frame(self.initialize_game_frame())
                     players = status.get_players()
                     self.board.start_match(players)
                     updated_board = self.board.get_board()
                     self.update_gui(updated_board)
                     messagebox.showinfo(title=GAME_NAME, message=status.get_message())
+
+    def go_to_main_menu(self):
+        game_state = self.board.get_game_state()
+        if game_state == GameState.MATCH_ENDED or game_state == GameState.ABANDONED_BY_OTHER_PLAYER:
+            self.set_main_frame(self.initialize_main_menu())
 
     def update_game_state(self) -> None: ...
 
@@ -327,24 +395,27 @@ class PlayerInterface(DogPlayerInterface):
             game_state == GameState.MATCH_ENDED
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
-            self.menu_file.entryconfigure("Reiniciar jogo", state="normal")
+            self.menu_file.entryconfigure(0, state=tk.NORMAL)
         else:
-            self.menu_file.entryconfigure("Reiniciar jogo", state="disabled")
-        if game_state == GameState.TITLE:
-            self.menu_file.entryconfigure("Iniciar partida", state="normal")
+            self.menu_file.entryconfigure(0, state=tk.DISABLED)
+
+        if (game_state == GameState.PLAYER_MOVE_1
+            or game_state == GameState.PLAYER_MOVE_2
+            or game_state == GameState.WAITING_OTHER_PLAYER
+        ):
+            self.menu_file.entryconfigure(1, state=tk.NORMAL)
         else:
-            self.menu_file.entryconfigure("Iniciar partida", state="disabled")
+            self.menu_file.entryconfigure(1, state=tk.DISABLED)
+        self.menu_file.update()
 
     def update_triangle_border(
-        self, index: int, border_stones: list[tuple[str, str]]
+        self, index: int, border_stone: tuple[str, str] | None
     ) -> None:
-        for border_index, border_stone in enumerate(border_stones):
-            border_stone_value, border_stone_color = border_stone
-            image = f"{border_stone_color}{border_stone_value}"
-            # TODO: implementar a lógica de atualização das bordas dos triângulos
+        # TODO: implementar a lógica de atualização das bordas dos triângulos
+        ...
 
     def update_board(
-        self, board: list[tuple[tuple[str, str] | None, list[tuple[str, str]]]]
+        self, board: list[tuple[tuple[str, str] | None, tuple[str, str] | None]]
     ) -> None:
         for i, triangle in enumerate(board):
             positioned_stone = triangle[0]
@@ -354,11 +425,11 @@ class PlayerInterface(DogPlayerInterface):
                 asset_name = f"{stone_color}{stone_value}"
             self.update_circle_image(i, asset_name)
 
-            border_stones = triangle[1]
-            self.update_triangle_border(i, border_stones)
+            border_stone = triangle[1]
+            self.update_triangle_border(i, border_stone)
 
     def update_gui(
-        self, updated_board: list[tuple[tuple[str, str] | None, list[tuple[str, str]]]]
+        self, updated_board: list[tuple[tuple[str, str] | None, tuple[str, str] | None]]
     ) -> None:
         self.update_stones()
         self.update_message_label()
