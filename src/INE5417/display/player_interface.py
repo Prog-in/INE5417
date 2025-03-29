@@ -31,6 +31,7 @@ class PlayerInterface(DogPlayerInterface):
         self.board: Board = Board()
         self.assets: dict[str, ImageTk.PhotoImage] = {}
         self.stone_buttons: dict[str, ttk.Button] = {}
+        self.main_frame: tk.Frame | None = None
         self.load_assets()
         self.populate_window()
         self.menu_file: tk.Menu = self.initialize_menubar()
@@ -61,6 +62,14 @@ class PlayerInterface(DogPlayerInterface):
     def load_assets(self) -> None:
         assets = {}
         extension = "png"
+
+        assets["menu_image"] = self.load_asset(
+            "menu_image", extension, (WINDOW_WIDTH, WINDOW_HEIGHT)
+        )
+
+        assets["menu_button"] = self.load_asset(
+            "menu_button", extension, (WINDOW_WIDTH // 4, BOARD_HEIGHT // 5)
+        )
 
         assets["board"] = self.load_asset(
             "board", extension, (BOARD_WIDTH, BOARD_HEIGHT)
@@ -108,27 +117,8 @@ class PlayerInterface(DogPlayerInterface):
 
         return player_stones_frame
 
-    def populate_window(self) -> None:
-        s = ttk.Style(self.root)
-        s.theme_use("clam")
-        s.configure("flat.TButton", borderwidth=0, bg="")
-        self.root.title(GAME_NAME)
-        self.root.geometry(WINDOW_GEOMETRY)
-        self.root.resizable(False, False)
-        # self.root.iconbitmap()
-
-        # logo_frame = ttk.Frame(self.root)
-        # logo_frame.pack(fill=tk.X, side = tk.TOP, expand=True)
-
+    def initialize_game_frame(self) -> ttk.Frame:
         game_frame = ttk.Frame(self.root)
-        game_frame.pack(fill=tk.X, side=tk.TOP, expand=True)
-
-        message_frame = ttk.Frame(self.root)
-        message_frame.pack(fill=tk.BOTH, side=tk.TOP, expand=False)
-
-        # Setting the image of the logo inside the frame for the logo
-        # logo = tk.PhotoImage(file="images/logo.png")
-        # ttk.Label(self.logo_frame, image=self.logo).grid(row=0, column=0)
 
         self.canvas_board = tk.Canvas(
             game_frame, width=BOARD_WIDTH, height=BOARD_HEIGHT
@@ -169,9 +159,52 @@ class PlayerInterface(DogPlayerInterface):
         self.canvas_board.grid(row=0, column=1, sticky=tk.NS)
         remote_player_stones_frame.grid(row=0, column=2)
 
+        return game_frame
+
+    def initialize_main_menu(self) -> ttk.Frame:
+        menu_frame = ttk.Frame(self.root)
+        menu_canvas = tk.Canvas(menu_frame, width=WINDOW_WIDTH, height=WINDOW_HEIGHT)
+        menu_canvas.create_image(
+            WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2, image=self.assets["menu_image"]
+        )
+        menu_button = menu_canvas.create_image(
+            WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2, image=self.assets["menu_button"]
+        )
+        menu_canvas.tag_bind(
+            menu_button,
+            "<ButtonRelease-1>",
+            #lambda event: self.start_game(),
+            lambda event: self.start_match()
+        )
+        menu_canvas.grid(row=0, column=0, sticky=tk.NSEW)
+
+        return menu_frame
+
+    def populate_window(self) -> None:
+        s = ttk.Style(self.root)
+        s.theme_use("clam")
+        s.configure("flat.TButton", borderwidth=0, bg="")
+        self.root.title(GAME_NAME)
+        self.root.geometry(WINDOW_GEOMETRY)
+        self.root.resizable(False, False)
+        # self.root.iconbitmap()
+
+        # logo_frame = ttk.Frame(self.root)
+        # logo_frame.pack(fill=tk.X, side = tk.TOP, expand=True)
+
+        # Setting the image of the logo inside the frame for the logo
+        # logo = tk.PhotoImage(file="images/logo.png")
+        # ttk.Label(self.logo_frame, image=self.logo).grid(row=0, column=0)
+
+        self.set_main_frame(self.initialize_main_menu())
+
+        message_frame = ttk.Frame(self.root)
         self.message_label = ttk.Label(message_frame, font=FONT)
         self.update_message_label()
         self.message_label.grid(row=0, column=1)
+
+        self.main_frame.pack(fill=tk.X, side=tk.TOP, anchor=tk.CENTER, expand=True)
+        message_frame.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False)
 
     def update_all_images(self):
         for button_name, stone_button in self.stone_buttons.items():
@@ -200,25 +233,19 @@ class PlayerInterface(DogPlayerInterface):
         menu_file = tk.Menu(menubar, bg="#FFFFFF")
         menubar.add_cascade(menu=menu_file, label="Menu")
 
-        # menu_file.add_command(label="Regras", command= self.rules_window_child,
-        #                            activebackground="#A7CCE7", activeforeground="#000")
         menu_file.add_command(
-            label="Iniciar partida",
-            command=self.start_match,
+            label="Voltar ao menu principal",
+            command=self.go_to_main_menu,
             activebackground="#A7CCE7",
             activeforeground="#000",
-        )
-        menu_file.add_command(
-            label="Reiniciar jogo",
-            command=self.start_game,
-            activebackground="#A7CCE7",
-            activeforeground="#000",
+            state=tk.DISABLED
         )
         menu_file.add_command(
             label="Trocar conjunto de imagens",
             command=self.switch_assets_set,
             activebackground="#A7CCE7",
             activeforeground="#000",
+            state=tk.DISABLED
         )
         menu_file.add_separator()
         menu_file.add_command(
@@ -255,10 +282,11 @@ class PlayerInterface(DogPlayerInterface):
 
     def start_game(self) -> None:
         game_state = self.board.get_game_state()
-        if (
-            game_state == GameState.MATCH_ENDED
+        if (game_state == GameState.TITLE
+            or game_state == GameState.MATCH_ENDED
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
+            self.set_main_frame(self.initialize_game_frame())
             self.board.reset_game()
             updated_board = self.board.get_board()
             self.update_gui(updated_board)
@@ -281,6 +309,13 @@ class PlayerInterface(DogPlayerInterface):
         updated_board = self.board.get_board()
         self.update_gui(updated_board)
 
+    def set_main_frame(self, new_frame: tk.Frame) -> None:
+        if self.main_frame is not None:
+            self.main_frame.destroy()
+        self.main_frame = new_frame
+        self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
+
+
     def start_match(self) -> None:
         game_state = self.board.get_game_state()
         if game_state == GameState.TITLE:
@@ -292,11 +327,17 @@ class PlayerInterface(DogPlayerInterface):
                 if code == "0" or code == "1":
                     messagebox.showinfo(title=GAME_NAME, message=message)
                 else:
+                    self.set_main_frame(self.initialize_game_frame())
                     players = status.get_players()
                     self.board.start_match(players)
                     updated_board = self.board.get_board()
                     self.update_gui(updated_board)
                     messagebox.showinfo(title=GAME_NAME, message=status.get_message())
+
+    def go_to_main_menu(self):
+        game_state = self.board.get_game_state()
+        if game_state == GameState.MATCH_ENDED or game_state == GameState.ABANDONED_BY_OTHER_PLAYER:
+            self.set_main_frame(self.initialize_main_menu())
 
     def update_game_state(self) -> None: ...
 
@@ -354,13 +395,17 @@ class PlayerInterface(DogPlayerInterface):
             game_state == GameState.MATCH_ENDED
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
-            self.menu_file.entryconfigure("Reiniciar jogo", state="normal")
+            self.menu_file.entryconfigure(0, state=tk.NORMAL)
         else:
-            self.menu_file.entryconfigure("Reiniciar jogo", state="disabled")
-        if game_state == GameState.TITLE:
-            self.menu_file.entryconfigure("Iniciar partida", state="normal")
+            self.menu_file.entryconfigure(0, state=tk.DISABLED)
+
+        if (game_state == GameState.PLAYER_MOVE_1
+            or game_state == GameState.PLAYER_MOVE_2
+            or game_state == GameState.WAITING_OTHER_PLAYER
+        ):
+            self.menu_file.entryconfigure(1, state=tk.NORMAL)
         else:
-            self.menu_file.entryconfigure("Iniciar partida", state="disabled")
+            self.menu_file.entryconfigure(1, state=tk.DISABLED)
         self.menu_file.update()
 
     def update_triangle_border(
