@@ -9,14 +9,16 @@ class Triangle:
     def get_stone(self):
         return self.stone
 
-    def move_stone_to_border(self):
-        self.border_stone = self.stone
-        self.stone = None
-
-    def place_stone(self, stone: Stone):
-        if self.stone is not None:
-            self.border_stone = self.stone
+    def insert_stone(self, stone: Stone):
         self.stone = stone
 
-    def get_border_stone(self) -> Stone | None:
+    def remove_stone(self): 
+        if self.stone is not None:
+            self.border_stone = self.stone
+        self.stone = None
+
+    def get_border_stone(self) -> Stone:
         return self.border_stone
+
+    def is_free(self):
+        return self.stone == None
