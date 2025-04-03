@@ -3,16 +3,23 @@ from .stone import Stone
 
 class Triangle:
     def __init__(self):
-        self.border_stones: list[Stone] = []
+        self.border_stone: Stone | None = None
         self.stone: Stone | None = None
 
     def get_stone(self):
         return self.stone
 
-    def set_stone(self, stone: Stone):
-        if isinstance(self.stone, Stone):
-            self.border_stones.append(self.stone)
+    def insert_stone(self, stone: Stone):
         self.stone = stone
 
-    def get_border_stones(self) -> list[Stone]:
-        return self.border_stones
+    def remove_stone(self): 
+        if self.stone is not None:
+            self.border_stone = self.stone
+        self.stone = None
+        
+
+    def get_border_stone(self) -> Stone:
+        return self.border_stone
+
+    def is_free(self):
+        return self.stone == None

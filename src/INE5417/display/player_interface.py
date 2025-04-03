@@ -31,8 +31,8 @@ class PlayerInterface(DogPlayerInterface):
         self.stone_buttons: dict[str, ttk.Button] = {}
         self.populate_window()
         self.menu_file: tk.Menu = self.initialize_menubar()
-        # self.player_name: str = self.get_player_name()
-        self.player_name: str = ""
+        self.player_name: str = self.get_player_name()
+        # self.player_name: str = ""
         self.dog: DogActor = DogActor()
         self.initialize_dog()
         self.root.mainloop()
@@ -204,15 +204,16 @@ class PlayerInterface(DogPlayerInterface):
 
     def initialize_dog(self) -> None:
         message = "Bem vindo, " + self.player_name + "!"
-        # messagebox.showinfo(title=GAME_NAME, message=message)
+        messagebox.showinfo(title=GAME_NAME, message=message)
 
         message = self.dog.initialize(self.player_name, self) + "."
-        # messagebox.showinfo(title="Dog Server", message=message)
+        messagebox.showinfo(title="Dog Server", message=message)
 
     def stone_selected(self, color: str, stone_value: int) -> None:
         game_state = self.board.get_game_state()
         if game_state == GameState.PLAYER_MOVE_1 or GameState.PLAYER_MOVE_2:
-            valid_circles = self.board.stone_selected(color, stone_value)
+            move_type = self.board.decide_move_type()
+            valid_circles = self.board.generate_valid_move_list()
             print("valid circles: ", valid_circles)
             for circle_index in valid_circles:
                 self.update_circle_visibility(circle_index, tk.NORMAL)
@@ -221,10 +222,10 @@ class PlayerInterface(DogPlayerInterface):
 
     def circle_selected(self, circle_id: int) -> None:
         # TODO: enviar os dados referentes à jogada do outro jogador em send_move
-        move_to_send = self.board.triangle_selected(circle_id)
+        move_to_send = self.board.execute_move(circle_id)
         print(move_to_send)
         self.dog.send_move(move_to_send)
-        self.update_stone_state(move_to_send["stone_color"], int(move_to_send["stone_value"]), tk.HIDDEN)
+        self.update_stone_state(self.board.get_local_player().get_color(), int(move_to_send["stone_value"]), tk.HIDDEN)
 
     def start_game(self) -> None:
         game_state = self.board.get_game_state()
