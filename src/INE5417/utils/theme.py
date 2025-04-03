@@ -1,6 +1,6 @@
 import enum
 
 
-class AssetsSet(enum.Enum):
+class Theme(enum.Enum):
     DEFAULT = 0
     ALTERNATIVE = 1
