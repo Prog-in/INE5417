@@ -265,8 +265,9 @@ class PlayerInterface(DogPlayerInterface):
 
     def stone_selected(self, color: str, stone_value: int) -> None:
         game_state = self.board.get_game_state()
-        if game_state == GameState.PLAYER_MOVE_1 or game_state == GameState.PLAYER_MOVE_2:
-            valid_circles = self.board.stone_selected(color, stone_value)
+        if game_state == GameState.PLAYER_MOVE_1 or GameState.PLAYER_MOVE_2:
+            move_type = self.board.decide_move_type()
+            valid_circles = self.board.generate_valid_move_list()
             print("valid circles: ", valid_circles)
             for circle_index in valid_circles:
                 self.update_circle_visibility(circle_index, tk.NORMAL)
