@@ -1,14 +1,17 @@
-import random
+import tkinter as tk
+from tkinter import ttk
 
 from .player import Player
 from .stone import Stone
 from .triangle import Triangle
+from ..display.board_interface import BoardInterface
 from ..utils.constants import COLOR_A, COLOR_B
 from ..utils.game_state import GameState
+from ..utils.move_type import MoveType
 
 
 class Board:
-    def __init__(self) -> None:
+    def __init__(self, root: tk.Tk, assets: dict[str, tk.PhotoImage]) -> None:
         # deve ser fixo pois, no caso de variável, deveria haver uma comunicação entre as instâncias do jogo
         # para acertar qual cor cada jogador usaria.
         self.local_player: Player = Player(COLOR_A)
@@ -18,11 +21,7 @@ class Board:
         self.last_move_info: None | tuple[int, Triangle] = None
         self.selected_stone: Stone | None = None
         self.triangles: list[Triangle] = self.initialize_triagles()
-
-    # def get_random_colors(self) -> list[str]:
-    #     colors = [COLOR_A, COLOR_B]
-    #     random.shuffle(colors)
-    #     return colors
+        self.board_interface: BoardInterface = BoardInterface(root, assets, COLOR_A, COLOR_B)
 
     def get_players_colors(self):
         return self.local_player.get_color(), self.remote_player.get_color()
@@ -55,26 +54,26 @@ class Board:
 
     def generate_valid_triangles(self, candidate_moves: set[Triangle]) -> list[Triangle]:
         return [
-            t for t in candidate_moves if t.is_empty() or t.get_stone().get_color() == self.local_player.get_color()
+            t for t in candidate_moves if t.is_free() or t.get_stone().get_color() == self.local_player.get_color()
         ]
         #for t in candidate_moves: 
-        #    if t.is_empty() or t.get_stone().get_color() == self.local_player.get_color():
+        #    if t.is_free() or t.get_stone().get_color() == self.local_player.get_color():
         #        yield t 
 
-    def generate_valid_move_list(self, last_move_info: None | tuple[int, Triangle]) -> list[Triangle]:
-        candidate_moves = self.calculate_range(last_move, info)
+    def generate_valid_move_list(self) -> list[Triangle]:
+        candidate_moves = self.calculate_range(self.last_move_info)
         valid_triangles = self.generate_valid_triangles(candidate_moves)
         return valid_triangles
 
-    def update_move_info(self, selected_triangle: int):
-        self.last_move_info = (self.selected_stone, selected_triangle])
+    def update_move_info(self, selected_triangle: Triangle):
+        self.last_move_info = (self.selected_stone, selected_triangle)
         self.selected_stone = None
 
     def execute_move(self, selected_triangle_index: int) -> dict[str, str]:
         # atualizar self.last_move_info aqui?
         self.update_move_info(self.triangles[selected_triangle_index])
         move_type = self.decide_move_type()
-        if move_type == INSERT:
+        if move_type == MoveType.INSERT:
             self.insert_stone(selected_triangle_index)
         else:
             self.remove_stone(selected_triangle_index)
@@ -83,7 +82,7 @@ class Board:
     def decide_move_type(self, selected_stone: Stone) -> MoveType:
         if selected_stone.get_color() != self.local_player.get_color():
             return MoveType.ASK_AGAIN
-        if selected_stone.on_board():
+        if selected_stone.get_on_board():
             return MoveType.REMOVE
         counter = 0
         for t in self.triangles:
@@ -96,10 +95,12 @@ class Board:
     def insert_stone(self, selected_triangle_index: int, selected_stone: Stone) -> None:
         selected_triangle = self.triangles[selected_triangle_index]
         selected_triangle.insert_stone(selected_stone)
+        selected_stone.set_on_board(True)
 
     def remove_stone(self, selected_triangle_index: int) -> None:
         selected_triangle = self.triangles[selected_triangle_index]
-        selected_triangle.remove_stone()
+        removed_stone = selected_triangle.remove_stone()
+        removed_stone.set_on_board(False)
 
     def generate_dog_food(self, move_type: str, triangle_index: int, stone_value: int, is_over: bool) -> dict[str, str]:
         return {
@@ -108,20 +109,6 @@ class Board:
             "stone_value": str(stone_value),
             "is_over": str(is_over)
         }
-
-    def triangle_selected(self, triangle_index: int) -> dict[str, str]:
-        # TODO: implementar cadeia de execuções para o caso de um triângulo válido ser selecionado (remover a pedra do
-        #  jogador apenas nesse passo)
-        self.last_positioned_stone = self.selected_stone
-        self.local_player.remove_stone(self.selected_stone.get_value())
-        move_to_send = {
-            "move_type": "placing",
-            "triangle_index": str(triangle_index),
-            "stone_color": self.selected_stone.get_color(),
-            "stone_value": str(self.selected_stone.get_value()),
-            "match_status": "next"  # dog key-value
-        }
-        return move_to_send
 
     def receive_move(self, a_move):
         if self.game_state == GameState.WAITING_OTHER_PLAYER:
@@ -156,7 +143,7 @@ class Board:
         return player
 
     def get_board(self) -> BoardInterface:
-        ...
+        return self.board_interface
 
-    def stone_to_tuple(self, stone: Stone) -> tuple[str, str]:
-        return str(stone.value), stone.color
+    def initialize_game_frame(self) -> ttk.Frame:
+        return self.board_interface.initialize_game_frame(self.local_player.get_color(), self.remote_player.get_color())
