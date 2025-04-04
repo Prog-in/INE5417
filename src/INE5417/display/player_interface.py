@@ -28,11 +28,11 @@ class PlayerInterface(DogPlayerInterface):
         super().__init__()
         self.root: tk.Tk = tk.Tk()
         self.assets_set: AssetsSet = AssetsSet.DEFAULT
-        self.board: Board = Board()
-        self.assets: dict[str, ImageTk.PhotoImage] = {}
+        self.assets: dict[str, ImageTk.PhotoImage] = self.load_assets()
+        self.board: Board = Board(self.root, self.assets)
         self.stone_buttons: dict[str, ttk.Button] = {}
-        self.main_frame: tk.Frame | None = None
-        self.load_assets()
+        self.main_frame: ttk.Frame | None = None
+        self.message_label: ttk.Label | None = None
         self.populate_window()
         self.menu_file: tk.Menu = self.initialize_menubar()
         # self.player_name: str = self.get_player_name()
@@ -53,13 +53,13 @@ class PlayerInterface(DogPlayerInterface):
         return "default"
 
     def load_asset(
-        self, asset_name: str, extension: str, dimensions: tuple[int, int]
+            self, asset_name: str, extension: str, dimensions: tuple[int, int]
     ) -> ImageTk.PhotoImage:
         asset_file = RESOURCES_DIR / self.get_assets_subdirectory() / f"{asset_name}.{extension}"
         asset_image = Image.open(asset_file).resize((dimensions[0], dimensions[1]))
         return ImageTk.PhotoImage(asset_image)
 
-    def load_assets(self) -> None:
+    def load_assets(self) -> dict[str, tk.PhotoImage]:
         assets = {}
         extension = "png"
 
@@ -88,78 +88,8 @@ class PlayerInterface(DogPlayerInterface):
                     extension,
                     (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)),
                 )
-        self.assets = assets
 
-    def initialize_player_stone_frame(self, player_color: str, frame_parent: tk.Widget, text: str) -> tk.Frame:
-        player_stones_frame = ttk.Frame(frame_parent, relief=tk.SOLID, borderwidth=2)
-        text_label = ttk.Label(player_stones_frame, text=text)
-        text_label.grid(column=0, row=0, columnspan=2, pady=1)
-
-        for i in range(6):
-            button_stone_1 = ttk.Button(
-                player_stones_frame,
-                image=self.assets[f"{player_color}{i}"],
-                command=lambda index=i: self.stone_selected(player_color, index),
-                state=tk.DISABLED,
-                style="flat.TButton",
-            )
-            button_stone_2 = ttk.Button(
-                player_stones_frame,
-                image=self.assets[f"{player_color}{i}"],
-                command=lambda index=i: self.stone_selected(player_color, index),
-                state=tk.DISABLED,
-                style="flat.TButton",
-            )
-            self.stone_buttons[player_color + str(i) + ".1"] = button_stone_1
-            self.stone_buttons[player_color + str(i) + ".2"] = button_stone_2
-            button_stone_1.grid(row=i+1, column=0, padx=0, pady=0)
-            button_stone_2.grid(row=i+1, column=1, padx=0, pady=0)
-
-        return player_stones_frame
-
-    def initialize_game_frame(self) -> ttk.Frame:
-        game_frame = ttk.Frame(self.root)
-
-        self.canvas_board = tk.Canvas(
-            game_frame, width=BOARD_WIDTH, height=BOARD_HEIGHT
-        )
-        self.canvas_board.create_image(
-            BOARD_WIDTH // 2, BOARD_HEIGHT // (2 - 0.15), image=self.assets["board"], tags="board"
-        )
-        circles_coordinates = (
-            (100, 100),
-            (120, 100),
-            (140, 100),
-            (160, 100),
-            (180, 100),
-            (200, 100),
-            (220, 100),
-            (240, 100),
-            (260, 100),
-            (280, 100),
-            (300, 100),
-            (320, 100),
-        )
-        for i in range(12):
-            x, y = circles_coordinates[i]
-            button_triangle = self.canvas_board.create_image(
-                x, y, image=self.assets["circle"], state=tk.HIDDEN, tags=f"circle{i}"
-            )
-            self.canvas_board.tag_bind(
-                button_triangle,
-                "<ButtonRelease-1>",
-                lambda event, index=i: self.circle_selected(index),
-            )
-
-        local_player_color, remote_player_color = self.board.get_players_colors()
-        local_player_stones_frame = self.initialize_player_stone_frame(local_player_color, game_frame, "Peças do jogador local")
-        remote_player_stones_frame = self.initialize_player_stone_frame(remote_player_color, game_frame, "Peças do jogador remoto")
-
-        local_player_stones_frame.grid(row=0, column=0)
-        self.canvas_board.grid(row=0, column=1, sticky=tk.NS)
-        remote_player_stones_frame.grid(row=0, column=2)
-
-        return game_frame
+        return assets
 
     def initialize_main_menu(self) -> ttk.Frame:
         menu_frame = ttk.Frame(self.root)
@@ -206,15 +136,6 @@ class PlayerInterface(DogPlayerInterface):
         self.main_frame.pack(fill=tk.X, side=tk.TOP, anchor=tk.CENTER, expand=True)
         message_frame.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False)
 
-    def update_all_images(self):
-        for button_name, stone_button in self.stone_buttons.items():
-            asset_name = button_name[:-2]
-            stone_button.configure(image=self.assets[asset_name])
-            stone_button.update()
-        for i in range(12):
-            self.canvas_board.itemconfig("circle" + str(i), image=self.assets["circle"])
-        self.canvas_board.itemconfig("board", image=self.assets["board"])
-
     def switch_assets_set(self):
         if not self.board.get_game_state() == GameState.TITLE:
             return
@@ -222,8 +143,8 @@ class PlayerInterface(DogPlayerInterface):
             self.assets_set = AssetsSet.ALTERNATIVE
         else:
             self.assets_set = AssetsSet.DEFAULT
-        self.load_assets()
-        self.update_all_images()
+        self.assets = self.load_assets()
+        self.board.get_board().update_widgets(self.assets)
 
     def initialize_menubar(self) -> tk.Menu:
         menubar = tk.Menu(self.root)
@@ -263,59 +184,36 @@ class PlayerInterface(DogPlayerInterface):
         message = self.dog.initialize(self.player_name, self) + "."
         # messagebox.showinfo(title="Dog Server", message=message)
 
-    def stone_selected(self, color: str, stone_value: int) -> None:
-        game_state = self.board.get_game_state()
-        if game_state == GameState.PLAYER_MOVE_1 or GameState.PLAYER_MOVE_2:
-            move_type = self.board.decide_move_type()
-            valid_circles = self.board.generate_valid_move_list()
-            print("valid circles: ", valid_circles)
-            for circle_index in valid_circles:
-                self.update_circle_visibility(circle_index, tk.NORMAL)
-            updated_board = self.board.get_board()
-            self.update_gui(updated_board)
-
-    def circle_selected(self, circle_id: int) -> None:
-        # TODO: enviar os dados referentes à jogada do outro jogador em send_move
-        move_to_send = self.board.triangle_selected(circle_id)
-        print(move_to_send)
-        self.dog.send_move(move_to_send)
-        self.update_stone_state(move_to_send["stone_color"], int(move_to_send["stone_value"]), tk.HIDDEN)
-
     def start_game(self) -> None:
         game_state = self.board.get_game_state()
         if (game_state == GameState.TITLE
-            or game_state == GameState.MATCH_ENDED
-            or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
+                or game_state == GameState.MATCH_ENDED
+                or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
-            self.set_main_frame(self.initialize_game_frame())
+            self.set_main_frame(self.board.get_board().get_board_frame())
             self.board.reset_game()
-            updated_board = self.board.get_board()
-            self.update_gui(updated_board)
+            # self.update_gui()
 
     def receive_start(self, start_status) -> None:
         self.start_game()
         players = start_status.get_players()
         self.board.start_match(players)
-        updated_board = self.board.get_board()
-        self.update_gui(updated_board)
+#        self.update_gui()
 
     def receive_move(self, a_move) -> None:
         print("received move:", a_move)
         self.board.receive_move(a_move)
-        updated_board = self.board.get_board()
-        self.update_gui(updated_board)
+        self.update_gui()
 
     def receive_withdrawal_notification(self) -> None:
         self.board.receive_withdrawal_notification()
-        updated_board = self.board.get_board()
-        self.update_gui(updated_board)
+        self.update_gui()
 
-    def set_main_frame(self, new_frame: tk.Frame) -> None:
+    def set_main_frame(self, new_frame: ttk.Frame) -> None:
         if self.main_frame is not None:
             self.main_frame.destroy()
         self.main_frame = new_frame
         self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
-
 
     def start_match(self) -> None:
         game_state = self.board.get_game_state()
@@ -328,11 +226,10 @@ class PlayerInterface(DogPlayerInterface):
                 if code == "0" or code == "1":
                     messagebox.showinfo(title=GAME_NAME, message=message)
                 else:
-                    self.set_main_frame(self.initialize_game_frame())
+                    self.set_main_frame(self.board.get_board().get_board_frame())
                     players = status.get_players()
                     self.board.start_match(players)
-                    updated_board = self.board.get_board()
-                    self.update_gui(updated_board)
+                    #self.update_gui()
                     messagebox.showinfo(title=GAME_NAME, message=status.get_message())
 
     def go_to_main_menu(self):
@@ -340,37 +237,20 @@ class PlayerInterface(DogPlayerInterface):
         if game_state == GameState.MATCH_ENDED or game_state == GameState.ABANDONED_BY_OTHER_PLAYER:
             self.set_main_frame(self.initialize_main_menu())
 
-    def update_game_state(self) -> None: ...
-
-    def update_circle_image(self, index: int, asset_name: str) -> None:
-        self.canvas_board.itemconfig(f"circle{index}", image=self.assets[f"{asset_name}"])
-
     def update_circle_visibility(self, index: int, state: str) -> None:
-        self.canvas_board.itemconfig(f"circle{index}", state=state)
-
-    def update_stone_state(self, stone_color: str, stone_value: int, state: str) -> None:
-        stone_button = self.stone_buttons[stone_color + str(stone_value) + ".2"]
-        if stone_button.cget("state") != state:
-            stone_button.configure(state=state)
-        else:
-            stone_button = self.stone_buttons[stone_color + str(stone_value) + ".1"]
-            stone_button.configure(state=state)
-        stone_button.update()
-        print(stone_color, stone_value, state)
+        self.board.get_board().update_circle_visibility(index, state)
 
     def update_stones(self) -> None:
         game_state = self.board.get_game_state()
         if (
-            game_state == GameState.TITLE
-            or game_state == GameState.MATCH_ENDED
-            or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
+                game_state == GameState.TITLE
+                or game_state == GameState.MATCH_ENDED
+                or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
             stone_buttons_state = tk.DISABLED
         else:
             stone_buttons_state = tk.NORMAL
-        for button in self.stone_buttons.values():
-            button.configure(state=stone_buttons_state)
-            button.update()
+        self.board.get_board().update_stones_state(stone_buttons_state)
 
     def update_message_label(self) -> None:
         message = GAME_NAME + ": "
@@ -393,16 +273,16 @@ class PlayerInterface(DogPlayerInterface):
     def update_menu_status(self) -> None:
         game_state = self.board.get_game_state()
         if (
-            game_state == GameState.MATCH_ENDED
-            or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
+                game_state == GameState.MATCH_ENDED
+                or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
             self.menu_file.entryconfigure(0, state=tk.NORMAL)
         else:
             self.menu_file.entryconfigure(0, state=tk.DISABLED)
 
         if (game_state == GameState.PLAYER_MOVE_1
-            or game_state == GameState.PLAYER_MOVE_2
-            or game_state == GameState.WAITING_OTHER_PLAYER
+                or game_state == GameState.PLAYER_MOVE_2
+                or game_state == GameState.WAITING_OTHER_PLAYER
         ):
             self.menu_file.entryconfigure(1, state=tk.NORMAL)
         else:
@@ -410,32 +290,32 @@ class PlayerInterface(DogPlayerInterface):
         self.menu_file.update()
 
     def update_triangle_border(
-        self, index: int, border_stone: tuple[str, str] | None
+            self, index: int, border_stone: tuple[str, str] | None
     ) -> None:
         # TODO: implementar a lógica de atualização das bordas dos triângulos
         ...
 
     def update_board(
-        self, board: list[tuple[tuple[str, str] | None, tuple[str, str] | None]]
+            self, updated_board_frame: ttk.Frame
     ) -> None:
-        for i, triangle in enumerate(board):
-            positioned_stone = triangle[0]
-            asset_name = f"circle"
-            if positioned_stone is not None:
-                stone_value, stone_color = positioned_stone
-                asset_name = f"{stone_color}{stone_value}"
-            self.update_circle_image(i, asset_name)
+        self.set_main_frame(updated_board_frame)
+        # for i, triangle in enumerate(board):
+        #     positioned_stone = triangle[0]
+        #     asset_name = f"circle"
+        #     if positioned_stone is not None:
+        #         stone_value, stone_color = positioned_stone
+        #         asset_name = f"{stone_color}{stone_value}"
+        #     self.update_circle_image(i, asset_name)
+        #
+        #     border_stone = triangle[1]
+        #     self.update_triangle_border(i, border_stone)
 
-            border_stone = triangle[1]
-            self.update_triangle_border(i, border_stone)
-
-    def update_gui(
-        self, updated_board: list[tuple[tuple[str, str] | None, tuple[str, str] | None]]
-    ) -> None:
+    def update_gui(self) -> None:
         self.update_stones()
         self.update_message_label()
         self.update_menu_status()
-        self.update_board(updated_board)
+        # self.update_board(updated_board_frame)
+        self.set_main_frame(self.board.get_board().get_board_frame())
 
-    def end_window(self):
+    def end_window(self) -> None:
         quit()
