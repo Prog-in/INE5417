@@ -2,20 +2,22 @@ import tkinter as tk
 from tkinter import ttk
 
 from ..utils.constants import BOARD_WIDTH, BOARD_HEIGHT
+from ..logic.board import Board
 
 
-class BoardInterface:
-    def __init__(self, root: tk.Tk, assets: dict[str, tk.PhotoImage], local_player_color: str, remote_player_color: str) -> None:
+class GameInterface:
+    def __init__(self, root: tk.Tk, assets: dict[str, tk.PhotoImage]) -> None:
         self.root = root
+        self.board = Board()
         self.assets: dict[str, tk.PhotoImage] = assets
         self.canvas_board: tk.Canvas | None = None
         self.stone_buttons: dict[str, tk.Button] = {}
-        self.board_frame: ttk.Frame = self.initialize_game_frame(local_player_color, remote_player_color)
+        self.board_frame: ttk.Frame = self.initialize_game_frame(*self.board.get_players_colors())
 
     def get_board_frame(self):
         return self.board_frame
 
-    def initialize_player_stone_frame(self, player_color: str, frame_parent: tk.Widget, text: str) -> ttk.Frame:
+    def initialize_player_stone_frame(self, player_color: str, frame_parent: tk.Widget, is_local: bool, text: str) -> ttk.Frame:
         player_stones_frame = ttk.Frame(frame_parent, relief=tk.SOLID, borderwidth=2)
         text_label = ttk.Label(player_stones_frame, text=text)
         text_label.grid(column=0, row=0, columnspan=2, pady=1)
@@ -25,14 +27,14 @@ class BoardInterface:
                 player_stones_frame,
                 image=self.assets[f"{player_color}{i}"],
                 command=lambda index=i: self.stone_selected(player_color, index),
-                state=tk.DISABLED,
+                state=tk.NORMAL if is_local else tk.DISABLED,
                 style="flat.TButton",
             )
             button_stone_2 = ttk.Button(
                 player_stones_frame,
                 image=self.assets[f"{player_color}{i}"],
                 command=lambda index=i: self.stone_selected(player_color, index),
-                state=tk.DISABLED,
+                state=tk.NORMAL if is_local else tk.DISABLED,
                 style="flat.TButton",
             )
             self.stone_buttons[player_color + str(i) + ".1"] = button_stone_1
@@ -76,16 +78,36 @@ class BoardInterface:
                 lambda event, index=i: self.circle_selected(index),
             )
 
-        local_player_stones_frame = self.initialize_player_stone_frame(local_player_color, game_frame,
+        local_player_stones_frame = self.initialize_player_stone_frame(local_player_color, game_frame, True,
                                                                        "Peças do jogador local")
-        remote_player_stones_frame = self.initialize_player_stone_frame(remote_player_color, game_frame,
+        remote_player_stones_frame = self.initialize_player_stone_frame(remote_player_color, game_frame, False,
                                                                         "Peças do jogador remoto")
 
         local_player_stones_frame.grid(row=0, column=0)
-        self.canvas_board.grid(row=0, column=1, sticky=tk.NS)
-        remote_player_stones_frame.grid(row=0, column=2)
+        self.canvas_board.grid(row=0, column=1, sticky=tk.NS) remote_player_stones_frame.grid(row=0, column=2)
 
         return game_frame
+
+    def update_board(
+            self, updated_board_frame: ttk.Frame
+    ) -> None:
+        self.set_main_frame(updated_board_frame)
+        # for i, triangle in enumerate(board):
+        #     positioned_stone = triangle[0]
+        #     asset_name = f"circle"
+        #     if positioned_stone is not None:
+        #         stone_value, stone_color = positioned_stone
+        #         asset_name = f"{stone_color}{stone_value}"
+        #     self.update_circle_image(i, asset_name)
+        #
+        #     border_stone = triangle[1]
+        #     self.update_triangle_border(i, border_stone)
+
+    def update_triangle_border(
+            self, index: int, border_stone: tuple[str, str] | None
+    ) -> None:
+        # TODO: implementar a lógica de atualização das bordas dos triângulos
+        ...
 
     def update_widgets(self, new_assets: dict[str, tk.PhotoImage]):
         self.assets = new_assets
@@ -117,6 +139,7 @@ class BoardInterface:
     def update_circle_image(self, index: int, asset_name: str) -> None:
         self.canvas_board.itemconfig(f"circle{index}", image=self.assets[f"{asset_name}"])
 
+    # NOTE: aqui ó
     def stone_selected(self, color: str, stone_value: int) -> None:
         print(f"pedra selecionada. cor = {color}, valor = {stone_value}")
         #game_state = self.board.get_game_state()

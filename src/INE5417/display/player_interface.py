@@ -29,7 +29,7 @@ class PlayerInterface(DogPlayerInterface):
         self.root: tk.Tk = tk.Tk()
         self.assets_set: AssetsSet = AssetsSet.DEFAULT
         self.assets: dict[str, ImageTk.PhotoImage] = self.load_assets()
-        self.board: Board = Board(self.root, self.assets)
+        self.game_interface: GameInterface = GameInterface(self.root, self.assets)
         self.stone_buttons: dict[str, ttk.Button] = {}
         self.main_frame: ttk.Frame | None = None
         self.message_label: ttk.Label | None = None
@@ -103,7 +103,6 @@ class PlayerInterface(DogPlayerInterface):
         menu_canvas.tag_bind(
             menu_button,
             "<ButtonRelease-1>",
-            #lambda event: self.start_game(),
             lambda event: self.start_match()
         )
         menu_canvas.grid(row=0, column=0, sticky=tk.NSEW)
@@ -118,7 +117,8 @@ class PlayerInterface(DogPlayerInterface):
         self.root.geometry(WINDOW_GEOMETRY)
         self.root.resizable(False, False)
         # self.root.iconbitmap()
-
+        
+        # TODO: adicionar a logo no menu
         # logo_frame = ttk.Frame(self.root)
         # logo_frame.pack(fill=tk.X, side = tk.TOP, expand=True)
 
@@ -195,19 +195,13 @@ class PlayerInterface(DogPlayerInterface):
             # self.update_gui()
 
     def receive_start(self, start_status) -> None:
-        self.start_game()
-        players = start_status.get_players()
-        self.board.start_match(players)
-#        self.update_gui()
+        ...
 
     def receive_move(self, a_move) -> None:
         print("received move:", a_move)
-        self.board.receive_move(a_move)
-        self.update_gui()
 
     def receive_withdrawal_notification(self) -> None:
-        self.board.receive_withdrawal_notification()
-        self.update_gui()
+        ...
 
     def set_main_frame(self, new_frame: ttk.Frame) -> None:
         if self.main_frame is not None:
@@ -226,10 +220,10 @@ class PlayerInterface(DogPlayerInterface):
                 if code == "0" or code == "1":
                     messagebox.showinfo(title=GAME_NAME, message=message)
                 else:
+                    # TODO: pensar no que deve ser feito ao iniciar uma partida
                     self.set_main_frame(self.board.get_board().get_board_frame())
                     players = status.get_players()
                     self.board.start_match(players)
-                    #self.update_gui()
                     messagebox.showinfo(title=GAME_NAME, message=status.get_message())
 
     def go_to_main_menu(self):
@@ -240,21 +234,10 @@ class PlayerInterface(DogPlayerInterface):
     def update_circle_visibility(self, index: int, state: str) -> None:
         self.board.get_board().update_circle_visibility(index, state)
 
-    def update_stones(self) -> None:
-        game_state = self.board.get_game_state()
-        if (
-                game_state == GameState.TITLE
-                or game_state == GameState.MATCH_ENDED
-                or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
-        ):
-            stone_buttons_state = tk.DISABLED
-        else:
-            stone_buttons_state = tk.NORMAL
-        self.board.get_board().update_stones_state(stone_buttons_state)
-
     def update_message_label(self) -> None:
         message = GAME_NAME + ": "
         match self.board.get_game_state():
+            # FIXME: não está aparecendo no menu
             case GameState.TITLE:
                 message += "Inicie a partida no menu"
             case GameState.PLAYER_MOVE_1:
@@ -289,33 +272,11 @@ class PlayerInterface(DogPlayerInterface):
             self.menu_file.entryconfigure(1, state=tk.DISABLED)
         self.menu_file.update()
 
-    def update_triangle_border(
-            self, index: int, border_stone: tuple[str, str] | None
-    ) -> None:
-        # TODO: implementar a lógica de atualização das bordas dos triângulos
-        ...
-
-    def update_board(
-            self, updated_board_frame: ttk.Frame
-    ) -> None:
-        self.set_main_frame(updated_board_frame)
-        # for i, triangle in enumerate(board):
-        #     positioned_stone = triangle[0]
-        #     asset_name = f"circle"
-        #     if positioned_stone is not None:
-        #         stone_value, stone_color = positioned_stone
-        #         asset_name = f"{stone_color}{stone_value}"
-        #     self.update_circle_image(i, asset_name)
-        #
-        #     border_stone = triangle[1]
-        #     self.update_triangle_border(i, border_stone)
-
-    def update_gui(self) -> None:
-        self.update_stones()
-        self.update_message_label()
-        self.update_menu_status()
-        # self.update_board(updated_board_frame)
-        self.set_main_frame(self.board.get_board().get_board_frame())
+    # def update_gui(self) -> None:
+    #     self.update_message_label()
+    #     self.update_menu_status()
+    #     # self.update_board(updated_board_frame)
+    #     self.set_main_frame(self.board.get_board().get_board_frame())
 
     def end_window(self) -> None:
         quit()
