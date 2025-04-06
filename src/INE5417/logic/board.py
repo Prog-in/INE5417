@@ -4,7 +4,6 @@ from tkinter import ttk
 from .player import Player
 from .stone import Stone
 from .triangle import Triangle
-from ..display.board_interface import BoardInterface
 from ..utils.constants import COLOR_A, COLOR_B
 from ..utils.game_state import GameState
 from ..utils.move_type import MoveType
@@ -21,9 +20,8 @@ class Board:
         self.last_move_info: None | tuple[int, Triangle] = None
         self.selected_stone: Stone | None = None
         self.triangles: list[Triangle] = self.initialize_triagles()
-        self.board_interface: BoardInterface = BoardInterface(root, assets, COLOR_A, COLOR_B)
 
-    def get_players_colors(self):
+    def get_players_colors(self) -> tuple[str, str]:
         return self.local_player.get_color(), self.remote_player.get_color()
 
     def initialize_triagles(self) -> list[Triangle]:
@@ -142,8 +140,3 @@ class Board:
         self.remote_player.toggle_turn()
         return player
 
-    def get_board(self) -> BoardInterface:
-        return self.board_interface
-
-    def initialize_game_frame(self) -> ttk.Frame:
-        return self.board_interface.initialize_game_frame(self.local_player.get_color(), self.remote_player.get_color())
