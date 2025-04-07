@@ -10,9 +10,6 @@ class MainMenuInterface(AbstractHelperInterface):
         super().__init__(root, assets)
         self.player_interface = player_interface
 
-    def get_frame(self) -> ttk.Frame:
-        return self.frame
-
     def initialize_frame(self) -> ttk.Frame:
         menu_frame = ttk.Frame(self.root)
 
