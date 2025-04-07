@@ -1,23 +1,25 @@
 import tkinter as tk
 from tkinter import ttk
 
+from .AbstractHelperInterface import AbstractHelperInterface
 from ..utils.constants import BOARD_WIDTH, BOARD_HEIGHT
 from ..logic.board import Board
+from ..utils.game_state import GameState
 
 
-class GameInterface:
+class GameInterface(AbstractHelperInterface):
     def __init__(self, root: tk.Tk, assets: dict[str, tk.PhotoImage]) -> None:
-        self.root = root
-        self.board = Board()
-        self.assets: dict[str, tk.PhotoImage] = assets
+        self.board: Board = Board()
         self.canvas_board: tk.Canvas | None = None
         self.stone_buttons: dict[str, tk.Button] = {}
-        self.board_frame: ttk.Frame = self.initialize_game_frame(*self.board.get_players_colors())
+        super().__init__(root, assets)
 
-    def get_board_frame(self):
-        return self.board_frame
+    def get_game_state(self) -> GameState:
+        return self.board.get_game_state()
 
-    def initialize_player_stone_frame(self, player_color: str, frame_parent: tk.Widget, is_local: bool, text: str) -> ttk.Frame:
+    def initialize_player_stone_frame(
+        self, player_color: str, frame_parent: tk.Widget, is_local: bool, text: str
+    ) -> ttk.Frame:
         player_stones_frame = ttk.Frame(frame_parent, relief=tk.SOLID, borderwidth=2)
         text_label = ttk.Label(player_stones_frame, text=text)
         text_label.grid(column=0, row=0, columnspan=2, pady=1)
@@ -44,14 +46,17 @@ class GameInterface:
 
         return player_stones_frame
 
-    def initialize_game_frame(self, local_player_color: str, remote_player_color: str) -> ttk.Frame:
+    def initialize_frame(self) -> ttk.Frame:
         game_frame = ttk.Frame(self.root)
 
         self.canvas_board = tk.Canvas(
             game_frame, width=BOARD_WIDTH, height=BOARD_HEIGHT
         )
         self.canvas_board.create_image(
-            BOARD_WIDTH // 2, BOARD_HEIGHT // (2 - 0.15), image=self.assets["board"], tags="board"
+            BOARD_WIDTH // 2,
+            BOARD_HEIGHT // (2 - 0.15),
+            image=self.assets["board"],
+            tags="board",
         )
         circles_coordinates = (
             (100, 100),
@@ -78,20 +83,28 @@ class GameInterface:
                 lambda event, index=i: self.circle_selected(index),
             )
 
-        local_player_stones_frame = self.initialize_player_stone_frame(local_player_color, game_frame, True,
-                                                                       "Peças do jogador local")
-        remote_player_stones_frame = self.initialize_player_stone_frame(remote_player_color, game_frame, False,
-                                                                        "Peças do jogador remoto")
+        local_player_color, remote_player_color = self.board.get_players_colors()
+        local_player_stones_frame = self.initialize_player_stone_frame(
+            local_player_color, game_frame, True, "Peças do jogador local"
+        )
+        remote_player_stones_frame = self.initialize_player_stone_frame(
+            remote_player_color, game_frame, False, "Peças do jogador remoto"
+        )
 
         local_player_stones_frame.grid(row=0, column=0)
-        self.canvas_board.grid(row=0, column=1, sticky=tk.NS) remote_player_stones_frame.grid(row=0, column=2)
+        self.canvas_board.grid(row=0, column=1, sticky=tk.NS)
+        remote_player_stones_frame.grid(row=0, column=2)
 
         return game_frame
 
-    def update_board(
-            self, updated_board_frame: ttk.Frame
-    ) -> None:
-        self.set_main_frame(updated_board_frame)
+    def start_match(self, players: list[list[str, str, str]]) -> None:
+        self.board.start_match(players)
+
+    def reset_game(self):
+        self.board.reset_game()
+
+    def update_board(self, updated_board_frame: ttk.Frame) -> None:
+        ...
         # for i, triangle in enumerate(board):
         #     positioned_stone = triangle[0]
         #     asset_name = f"circle"
@@ -104,7 +117,7 @@ class GameInterface:
         #     self.update_triangle_border(i, border_stone)
 
     def update_triangle_border(
-            self, index: int, border_stone: tuple[str, str] | None
+        self, index: int, border_stone: tuple[str, str] | None
     ) -> None:
         # TODO: implementar a lógica de atualização das bordas dos triângulos
         ...
@@ -119,7 +132,9 @@ class GameInterface:
             self.canvas_board.itemconfig("circle" + str(i), image=self.assets["circle"])
         self.canvas_board.itemconfig("board", image=self.assets["board"])
 
-    def update_stone_state(self, stone_color: str, stone_value: int, state: str) -> None:
+    def update_stone_state(
+        self, stone_color: str, stone_value: int, state: str
+    ) -> None:
         stone_button = self.stone_buttons[stone_color + str(stone_value) + ".2"]
         if stone_button.cget("state") != state:
             stone_button.configure(state=state)
@@ -137,13 +152,15 @@ class GameInterface:
         self.canvas_board.itemconfig(f"circle{index}", state=state)
 
     def update_circle_image(self, index: int, asset_name: str) -> None:
-        self.canvas_board.itemconfig(f"circle{index}", image=self.assets[f"{asset_name}"])
+        self.canvas_board.itemconfig(
+            f"circle{index}", image=self.assets[f"{asset_name}"]
+        )
 
     # NOTE: aqui ó
     def stone_selected(self, color: str, stone_value: int) -> None:
         print(f"pedra selecionada. cor = {color}, valor = {stone_value}")
-        #game_state = self.board.get_game_state()
-        #if game_state == GameState.PLAYER_MOVE_1 or GameState.PLAYER_MOVE_2:
+        # game_state = self.board.get_game_state()
+        # if game_state == GameState.PLAYER_MOVE_1 or GameState.PLAYER_MOVE_2:
         # move_type = self.board.decide_move_type()
         # valid_circles = self.board.generate_valid_move_list()
         # print("valid circles: ", valid_circles)
