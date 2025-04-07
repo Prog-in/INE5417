@@ -10,13 +10,12 @@ from ..utils.move_type import MoveType
 
 
 class Board:
-    def __init__(self, root: tk.Tk, assets: dict[str, tk.PhotoImage]) -> None:
+    def __init__(self) -> None:
         # deve ser fixo pois, no caso de variável, deveria haver uma comunicação entre as instâncias do jogo
         # para acertar qual cor cada jogador usaria.
         self.local_player: Player = Player(COLOR_A)
         self.remote_player: Player = Player(COLOR_B)
         self.game_state: GameState = GameState.TITLE
-        # self.regular_move: bool = True
         self.last_move_info: None | tuple[int, Triangle] = None
         self.selected_stone: Stone | None = None
         self.triangles: list[Triangle] = self.initialize_triagles()
@@ -33,30 +32,38 @@ class Board:
         self.triangles = self.initialize_triagles()
 
     def calculate_range(self, last_move_info: None | tuple[int, int]) -> set[Triangle]:
-        if last_move_info is None: return set(self.triangles)
+        if last_move_info is None:
+            return set(self.triangles)
         value, position = last_move_info
         if value == 0:
             for i in range(1, 12):
                 var = set()
                 left = self.triangles[(position - i) % 12]
                 right = self.triangles[(position + i) % 12]
-                if left.is_free(): var.add(left)
-                if right.is_free(): var.add(right)
-                if len(var): return var
+                if left.is_free():
+                    var.add(left)
+                if right.is_free():
+                    var.add(right)
+                if len(var):
+                    return var
             return set()
         else:
             return {
                 self.triangles[(position - value) % 12],
-                self.triangles[(position + value) % 12]
+                self.triangles[(position + value) % 12],
             }
 
-    def generate_valid_triangles(self, candidate_moves: set[Triangle]) -> list[Triangle]:
+    def generate_valid_triangles(
+        self, candidate_moves: set[Triangle]
+    ) -> list[Triangle]:
         return [
-            t for t in candidate_moves if t.is_free() or t.get_stone().get_color() == self.local_player.get_color()
+            t
+            for t in candidate_moves
+            if t.is_free() or t.get_stone().get_color() == self.local_player.get_color()
         ]
-        #for t in candidate_moves: 
+        # for t in candidate_moves:
         #    if t.is_free() or t.get_stone().get_color() == self.local_player.get_color():
-        #        yield t 
+        #        yield t
 
     def generate_valid_move_list(self) -> list[Triangle]:
         candidate_moves = self.calculate_range(self.last_move_info)
@@ -100,12 +107,14 @@ class Board:
         removed_stone = selected_triangle.remove_stone()
         removed_stone.set_on_board(False)
 
-    def generate_dog_food(self, move_type: str, triangle_index: int, stone_value: int, is_over: bool) -> dict[str, str]:
+    def generate_dog_food(
+        self, move_type: str, triangle_index: int, stone_value: int, is_over: bool
+    ) -> dict[str, str]:
         return {
             "move_type": move_type,
             "triangle_index": str(triangle_index),
             "stone_value": str(stone_value),
-            "is_over": str(is_over)
+            "is_over": str(is_over),
         }
 
     def receive_move(self, a_move):
@@ -139,4 +148,3 @@ class Board:
         self.local_player.toggle_turn()
         self.remote_player.toggle_turn()
         return player
-
