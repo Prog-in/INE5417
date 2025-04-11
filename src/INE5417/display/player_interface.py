@@ -131,6 +131,7 @@ class PlayerInterface:
         if self.main_frame is not None:
             self.main_frame.destroy()
         self.main_frame = new_frame
+        # FIXME: problema ao retornar ao menu principal apertando o respectivo botão
         self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
 
     def goto_main_menu(self) -> None:
