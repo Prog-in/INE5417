@@ -115,14 +115,14 @@ class PlayerInterface:
         )
         self.menu_file.add_command(
             label="Trocar conjunto de imagens",
-            command=lambda: print("Botão para trocar conjunto de imagens"),
+            command=lambda: print("Botão para trocar conjunto de imagens pressionado"),
             activebackground="#A7CCE7",
             activeforeground="#000",
         )
         self.menu_file.add_separator()
         self.menu_file.add_command(
             label="Sair",
-            command=lambda: print("Botão para encerrar o programa localmente"),
+            command=lambda: print("Botão para encerrar o programa localmente pressionado"),
             activebackground="#EA9E9E",
             activeforeground="#000",
         )
@@ -140,9 +140,9 @@ class PlayerInterface:
         self.set_main_frame(self.game_interface.get_frame())
 
     def go_to_main_menu(self) -> None:
-        print("Botão para ir ao menu principal")
+        print("Botão para ir ao menu principal pressionado")
         self.goto_main_menu()
 
     def go_to_game_screen(self) -> None:
-        print("Botão para ir à tela de partida")
+        print("Botão para ir à tela de partida pressionado")
         self.goto_game_screen()
