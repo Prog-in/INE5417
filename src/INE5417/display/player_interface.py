@@ -9,7 +9,7 @@ from .main_menu_interface import MainMenuInterface
 from ..dog.dog_actor import DogActor
 from ..dog.dog_interface import DogPlayerInterface
 from ..dog.start_status import StartStatus
-from ..utils.assets_set import AssetsSet
+from ..utils.theme import Theme
 from ..utils.constants import (
     GAME_NAME,
     WINDOW_WIDTH,
@@ -29,7 +29,7 @@ class PlayerInterface(DogPlayerInterface):
     def __init__(self) -> None:
         super().__init__()
         self.root: tk.Tk = tk.Tk()
-        self.assets_set: AssetsSet = AssetsSet.DEFAULT
+        self.theme: Theme = Theme.DEFAULT
         self.assets: dict[str, ImageTk.PhotoImage] = self.load_assets()
         self.main_menu_interface: MainMenuInterface = MainMenuInterface(
             self.root, self.assets, self
@@ -51,7 +51,7 @@ class PlayerInterface(DogPlayerInterface):
         return name if name else "User"
 
     def get_assets_subdirectory(self) -> str:
-        return "default" if self.assets_set == AssetsSet.DEFAULT else "alternative"
+        return "default" if self.theme == Theme.DEFAULT else "alternative"
 
     def load_asset(
         self, asset_name: str, extension: str, dimensions: tuple[int, int]
@@ -107,11 +107,11 @@ class PlayerInterface(DogPlayerInterface):
 
         self.goto_main_menu()
 
-    def switch_assets_set(self):
-        if self.assets_set == AssetsSet.DEFAULT:
-            self.assets_set = AssetsSet.ALTERNATIVE
+    def switch_theme(self):
+        if self.theme == Theme.DEFAULT:
+            self.theme = Theme.ALTERNATIVE
         else:
-            self.assets_set = AssetsSet.DEFAULT
+            self.theme = Theme.DEFAULT
         self.assets = self.load_assets()
         self.game_interface.update_widgets(self.assets)
 
@@ -139,7 +139,7 @@ class PlayerInterface(DogPlayerInterface):
         )
         self.menu_file.add_command(
             label="Trocar conjunto de imagens",
-            command=self.switch_assets_set,
+            command=self.switch_theme,
             activebackground="#A7CCE7",
             activeforeground="#000",
             state=tk.DISABLED,

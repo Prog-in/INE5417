@@ -18,9 +18,9 @@ class GameInterface(AbstractHelperInterface):
         return self.board.get_game_state()
 
     def initialize_player_stone_frame(
-        self, player_color: str, frame_parent: tk.Widget, is_local: bool, text: str
+        self, player_color: str, parent_widget: tk.Widget, is_local: bool, text: str
     ) -> ttk.Frame:
-        player_stones_frame = ttk.Frame(frame_parent, relief=tk.SOLID, borderwidth=2)
+        player_stones_frame = ttk.Frame(parent_widget, relief=tk.SOLID, borderwidth=2)
         text_label = ttk.Label(player_stones_frame, text=text)
         text_label.grid(column=0, row=0, columnspan=2, pady=1)
 
