@@ -74,33 +74,36 @@ class Board:
         self.last_move_info = (self.selected_stone, selected_triangle)
         self.selected_stone = None
 
+    def stone_selected(self, color: str, stone_value: int) -> None:
+        self.selected_stone = stone_value
+
     def execute_move(self, selected_triangle_index: int) -> dict[str, str]:
         # atualizar self.last_move_info aqui?
-        self.update_move_info(self.triangles[selected_triangle_index])
         move_type = self.decide_move_type()
         if move_type == MoveType.INSERT:
             self.insert_stone(selected_triangle_index)
         else:
             self.remove_stone(selected_triangle_index)
+        self.update_move_info(self.triangles[selected_triangle_index])
         return self.generate_dog_food()
 
-    def decide_move_type(self, selected_stone: Stone) -> MoveType:
-        if selected_stone.get_color() != self.local_player.get_color():
+    def decide_move_type(self) -> MoveType:
+        if self.selected_stone.get_color() != self.local_player.get_color():
             return MoveType.ASK_AGAIN
-        if selected_stone.get_on_board():
+        if self.selected_stone.get_on_board():
             return MoveType.REMOVE
         counter = 0
         for t in self.triangles:
-            if t.get_stone().get_value() == selected_stone.get_value():
+            if t.get_stone().get_value() == self.selected_stone.get_value():
                 counter += 1
         if counter < 2:
             return MoveType.INSERT
         return MoveType.ASK_AGAIN
 
-    def insert_stone(self, selected_triangle_index: int, selected_stone: Stone) -> None:
+    def insert_stone(self, selected_triangle_index: int) -> None:
         selected_triangle = self.triangles[selected_triangle_index]
-        selected_triangle.insert_stone(selected_stone)
-        selected_stone.set_on_board(True)
+        selected_triangle.insert_stone(self.selected_stone)
+        self.selected_stone.set_on_board(True)
 
     def remove_stone(self, selected_triangle_index: int) -> None:
         selected_triangle = self.triangles[selected_triangle_index]
@@ -108,10 +111,10 @@ class Board:
         removed_stone.set_on_board(False)
 
     def generate_dog_food(
-        self, move_type: str, triangle_index: int, stone_value: int, is_over: bool
+        self, move_type: MoveType, triangle_index: int, stone_value: int, is_over: bool
     ) -> dict[str, str]:
         return {
-            "move_type": move_type,
+            "move_type": move_type.value,
             "triangle_index": str(triangle_index),
             "stone_value": str(stone_value),
             "is_over": str(is_over),

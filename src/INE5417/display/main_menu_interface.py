@@ -7,8 +7,7 @@ from ..utils.constants import WINDOW_WIDTH, WINDOW_HEIGHT
 
 class MainMenuInterface(AbstractHelperInterface):
     def __init__(self, root: tk.Tk, assets: dict[str, tk.PhotoImage], player_interface):
-        super().__init__(root, assets)
-        self.player_interface = player_interface
+        super().__init__(root, assets, player_interface)
 
     def initialize_frame(self) -> ttk.Frame:
         menu_frame = ttk.Frame(self.root)

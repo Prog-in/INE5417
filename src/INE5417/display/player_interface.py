@@ -34,7 +34,7 @@ class PlayerInterface(DogPlayerInterface):
         self.main_menu_interface: MainMenuInterface = MainMenuInterface(
             self.root, self.assets, self
         )
-        self.game_interface: GameInterface = GameInterface(self.root, self.assets)
+        self.game_interface: GameInterface = GameInterface(self.root, self.assets, self)
         self.stone_buttons: dict[str, ttk.Button] = {}
         self.main_frame: ttk.Frame | None = None
         self.message_label: ttk.Label | None = None
@@ -220,6 +220,9 @@ class PlayerInterface(DogPlayerInterface):
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
             self.goto_main_menu()
+
+    def send_move(self, move: dict[str, str]) -> None:
+        self.dog.send_move(move)
 
     def update_circle_visibility(self, index: int, state: str) -> None:
         self.game_interface.update_circle_visibility(index, state)
