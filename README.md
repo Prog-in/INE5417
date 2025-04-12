@@ -1,10 +1,16 @@
-# Qyshinsu
+# INE5417
 
-Para iniciar o programa, siga os seguintes passos
+Este é o projeto implementado na disciplina INE5417 - Engenharia de Software I. Trata-se de um jogo de tabuleiro
+chamado Qyshinsu.
 
-## Opcional: criação de um ambiente virtual
 
-Recomenda-se a criação de um ambiente virtual para a instalação das dependências necessárias ao funcionamento do jogo. 
+## Execução do jogo
+
+Para se executar o jogo, deve-se seguir os passos descritos nas seguintes seções.
+
+### Opcional: criação de um ambiente virtual
+
+Recomenda-se a criação de um ambiente virtual para a instalação das dependências necessárias ao funcionamento do jogo.
 Os passos para a sua criação estão descritos abaixo.
 
 <ol>
@@ -12,7 +18,7 @@ Os passos para a sua criação estão descritos abaixo.
     <li>Ative o ambiente virtual por meio do comando `source .venv/bin/activate`</li>
 </ol>
 
-## Execução do programa
+### Execução do programa
 
 Para executar o programa, deve-se primeiro instalar as dependências necessárias por meio do comando
 
@@ -23,11 +29,11 @@ pip install -r requirements.txt
 Após isso, para iniciar o programa, deve-se utilizar o comando
 
 ```bash
-python3 
+python3 src/main.py
 ```
 
-## Observações
+### Observações
 
-A depender do sistema operacional, o executável do Python pode ter nomes diferentes. Caso o comando `python3` não seja 
-reconhecido, recomenda-se tentar com `python`. Se ainda não for possível, verifique se o Python está instalado e 
-consulte a documentação do mesmo para saber qual o nome do executável.
+A depender do sistema operacional, o executável do Python pode ter nomes diferentes. Caso o comando `python3` não seja
+reconhecido, recomenda-se tentar com `python`. Se ainda não for possível, verifique se o Python está instalado e
+consulte a documentação do mesmo para identificar o nome do executável.
