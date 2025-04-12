@@ -79,7 +79,7 @@ class PlayerInterface(DogPlayerInterface):
         )
 
         assets["circle"] = self.load_asset(
-            "circle", extension, (int(BOARD_WIDTH * 0.1), int(BOARD_HEIGHT * 0.1))
+            "circle", extension, (int(BOARD_WIDTH * 0.13), int(BOARD_HEIGHT * 0.13))
         )
 
         # assets das pedras
@@ -185,7 +185,7 @@ class PlayerInterface(DogPlayerInterface):
 
     def set_main_frame(self, new_frame: ttk.Frame) -> None:
         if self.main_frame is not None:
-            self.main_frame.destroy()
+            self.main_frame.pack_forget()
         self.main_frame = new_frame
         self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
 
