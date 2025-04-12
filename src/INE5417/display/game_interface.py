@@ -6,10 +6,12 @@ from ..utils.constants import BOARD_WIDTH, BOARD_HEIGHT, COLOR_A, COLOR_B
 
 
 class GameInterface(AbstractHelperInterface):
-    def __init__(self, root: tk.Tk, assets: dict[str, tk.PhotoImage]) -> None:
+    def __init__(
+        self, root: tk.Tk, assets: dict[str, tk.PhotoImage], player_interface
+    ) -> None:
         self.canvas_board: tk.Canvas | None = None
         self.stone_buttons: dict[str, tk.Button] = {}
-        super().__init__(root, assets)
+        super().__init__(root, assets, player_interface)
 
     def initialize_player_stone_frame(
         self, player_color: str, parent_widget: tk.Widget, is_local: bool, text: str
@@ -22,14 +24,18 @@ class GameInterface(AbstractHelperInterface):
             button_stone_1 = ttk.Button(
                 player_stones_frame,
                 image=self.assets[f"{player_color}{i}"],
-                command=lambda index=i: print(f"pedra selecionada. cor = {player_color}, valor = {index}"),
+                command=lambda index=i: print(
+                    f"pedra selecionada. cor = {player_color}, valor = {index}"
+                ),
                 state=tk.NORMAL if is_local else tk.DISABLED,
                 style="flat.TButton",
             )
             button_stone_2 = ttk.Button(
                 player_stones_frame,
                 image=self.assets[f"{player_color}{i}"],
-                command=lambda index=i: print(f"pedra selecionada. cor = {player_color}, valor = {index}"),
+                command=lambda index=i: print(
+                    f"pedra selecionada. cor = {player_color}, valor = {index}"
+                ),
                 state=tk.NORMAL if is_local else tk.DISABLED,
                 style="flat.TButton",
             )

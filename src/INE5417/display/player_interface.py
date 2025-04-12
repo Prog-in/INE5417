@@ -19,6 +19,7 @@ from ..utils.constants import (
     COLOR_B,
 )
 
+
 class PlayerInterface:
     def __init__(self) -> None:
         super().__init__()
@@ -27,7 +28,7 @@ class PlayerInterface:
         self.main_menu_interface: MainMenuInterface = MainMenuInterface(
             self.root, self.assets, self
         )
-        self.game_interface: GameInterface = GameInterface(self.root, self.assets)
+        self.game_interface: GameInterface = GameInterface(self.root, self.assets, self)
         self.main_frame: ttk.Frame | None = None
         self.message_label: ttk.Label | None = None
         self.menu_file: tk.Menu | None = None
@@ -42,9 +43,7 @@ class PlayerInterface:
     def load_asset(
         self, asset_name: str, extension: str, dimensions: tuple[int, int]
     ) -> ImageTk.PhotoImage:
-        asset_file = (
-            RESOURCES_DIR / "default" / f"{asset_name}.{extension}"
-        )
+        asset_file = RESOURCES_DIR / "default" / f"{asset_name}.{extension}"
         asset_image = Image.open(asset_file).resize((dimensions[0], dimensions[1]))
         return ImageTk.PhotoImage(asset_image)
 
@@ -95,7 +94,9 @@ class PlayerInterface:
 
     def initialize_message_label(self) -> None:
         message_frame = ttk.Frame(self.root)
-        self.message_label = ttk.Label(message_frame, font=FONT, text="Label de mensagens")
+        self.message_label = ttk.Label(
+            message_frame, font=FONT, text="Label de mensagens"
+        )
         self.message_label.grid(row=0, column=1)
         message_frame.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False)
 
@@ -122,7 +123,9 @@ class PlayerInterface:
         self.menu_file.add_separator()
         self.menu_file.add_command(
             label="Sair",
-            command=lambda: print("Botão para encerrar o programa localmente pressionado"),
+            command=lambda: print(
+                "Botão para encerrar o programa localmente pressionado"
+            ),
             activebackground="#EA9E9E",
             activeforeground="#000",
         )
