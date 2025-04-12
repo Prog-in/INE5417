@@ -1,10 +1,6 @@
-import tkinter as tk
-from tkinter import ttk
-
 from .player import Player
 from .stone import Stone
 from .triangle import Triangle
-from ..utils.constants import COLOR_A, COLOR_B
 from ..utils.game_state import GameState
 from ..utils.move_type import MoveType
 
@@ -13,23 +9,19 @@ class Board:
     def __init__(self) -> None:
         # deve ser fixo pois, no caso de variável, deveria haver uma comunicação entre as instâncias do jogo
         # para acertar qual cor cada jogador usaria.
-        self.local_player: Player = Player(COLOR_A)
-        self.remote_player: Player = Player(COLOR_B)
+        self.local_player: Player = Player()
+        self.remote_player: Player = Player()
         self.game_state: GameState = GameState.TITLE
         self.last_move_info: None | tuple[int, Triangle] = None
         self.selected_stone: Stone | None = None
-        self.triangles: list[Triangle] = self.initialize_triagles()
+        self.triangles: list[Triangle] = [Triangle() for _ in range(12)]
 
     def get_players_colors(self) -> tuple[str, str]:
         return self.local_player.get_color(), self.remote_player.get_color()
 
-    def initialize_triagles(self) -> list[Triangle]:
-        return [Triangle() for _ in range(12)]
-
     def reset_game(self):
         self.local_player: Player = Player(self.local_player.get_color())
         self.remote_player: Player = Player(self.remote_player.get_color())
-        self.triangles = self.initialize_triagles()
 
     def calculate_range(self, last_move_info: None | tuple[int, int]) -> set[Triangle]:
         if last_move_info is None:
@@ -74,48 +66,57 @@ class Board:
         self.last_move_info = (self.selected_stone, selected_triangle)
         self.selected_stone = None
 
+    def stone_selected(self, color: str, stone_value: int) -> None:
+        self.selected_stone = stone_value
+
     def execute_move(self, selected_triangle_index: int) -> dict[str, str]:
         # atualizar self.last_move_info aqui?
-        self.update_move_info(self.triangles[selected_triangle_index])
         move_type = self.decide_move_type()
+        removed_stone = None
         if move_type == MoveType.INSERT:
             self.insert_stone(selected_triangle_index)
         else:
-            self.remove_stone(selected_triangle_index)
-        return self.generate_dog_food()
+            removed_stone = self.remove_stone(selected_triangle_index)
+        self.update_move_info(self.triangles[selected_triangle_index])
+        return self.generate_dog_food(move_type, selected_triangle_index, removed_stone, self.local_player.get_winner())
 
-    def decide_move_type(self, selected_stone: Stone) -> MoveType:
-        if selected_stone.get_color() != self.local_player.get_color():
+    def decide_move_type(self) -> MoveType:
+        if self.selected_stone.get_color() != self.local_player.get_color():
             return MoveType.ASK_AGAIN
-        if selected_stone.get_on_board():
+        #FIXME(Hélcio): O jogador clica NO TABULEIRO quando ele quer remover 
+        #uma pedra. Se fode aí pra arrumar.
+        if self.selected_stone.get_on_board():
             return MoveType.REMOVE
         counter = 0
         for t in self.triangles:
-            if t.get_stone().get_value() == selected_stone.get_value():
+            if t.get_stone().get_value() == self.selected_stone.get_value():
                 counter += 1
         if counter < 2:
             return MoveType.INSERT
         return MoveType.ASK_AGAIN
 
-    def insert_stone(self, selected_triangle_index: int, selected_stone: Stone) -> None:
+    def insert_stone(self, selected_triangle_index: int) -> None:
         selected_triangle = self.triangles[selected_triangle_index]
-        selected_triangle.insert_stone(selected_stone)
-        selected_stone.set_on_board(True)
+        selected_triangle.insert_stone(self.selected_stone)
+        self.selected_stone.set_on_board(True)
 
-    def remove_stone(self, selected_triangle_index: int) -> None:
+    def remove_stone(self, selected_triangle_index: int) -> Stone:
         selected_triangle = self.triangles[selected_triangle_index]
         removed_stone = selected_triangle.remove_stone()
         removed_stone.set_on_board(False)
+        return removed_stone
 
     def generate_dog_food(
-        self, move_type: str, triangle_index: int, stone_value: int, is_over: bool
+        self, move_type: MoveType, triangle_index: int, removed_stone: Stone | None, you_lost: bool
     ) -> dict[str, str]:
-        return {
-            "move_type": move_type,
+        move_to_send =  {
+            "move_type": move_type.value,
             "triangle_index": str(triangle_index),
-            "stone_value": str(stone_value),
-            "is_over": str(is_over),
+            "you_lost": str(you_lost),
         }
+        if move_type == MoveType.INSERT:
+            move_to_send["stone_value"] = str(removed_stone.get_value())
+        return move_to_send
 
     def receive_move(self, a_move):
         if self.game_state == GameState.WAITING_OTHER_PLAYER:
@@ -124,15 +125,23 @@ class Board:
     def receive_withdrawal_notification(self):
         self.game_state = GameState.ABANDONED_BY_OTHER_PLAYER
 
-    def start_match(self, players: list[list[str, str, str]]) -> None:
+    def update_player_instances(self, local_player_id: str, local_player_order: int, remote_player_id: str, remote_player_order: int) -> None:
+        self.local_player.reset()
+        self.remote_player.reset()
+
+        self.local_player.update(local_player_id, local_player_order)
+        self.remote_player.update(remote_player_id, remote_player_order)
+
+    def perform_start_match(self, players: list[list[str, str, str]]) -> None:
         player_a_name = players[0][0]
         player_a_id = players[0][1]
         player_a_order = int(players[0][2])
         player_b_name = players[1][0]
         player_b_id = players[1][1]
         player_b_order = int(players[1][2])
-        self.local_player.initialize(player_a_id, player_a_order)
-        self.remote_player.initialize(player_b_id, player_b_order)
+
+        self.update_player_instances(player_a_id, player_a_order, player_b_id, player_b_order)
+
         if player_a_order == 1:
             self.game_state = GameState.PLAYER_MOVE_1
         else:

@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 from tkinter import ttk
@@ -9,7 +10,6 @@ from .main_menu_interface import MainMenuInterface
 from ..dog.dog_actor import DogActor
 from ..dog.dog_interface import DogPlayerInterface
 from ..dog.start_status import StartStatus
-from ..utils.theme import Theme
 from ..utils.constants import (
     GAME_NAME,
     WINDOW_WIDTH,
@@ -23,6 +23,7 @@ from ..utils.constants import (
     COLOR_B,
 )
 from ..utils.game_state import GameState
+from ..utils.theme import Theme
 
 
 class PlayerInterface(DogPlayerInterface):
@@ -34,21 +35,17 @@ class PlayerInterface(DogPlayerInterface):
         self.main_menu_interface: MainMenuInterface = MainMenuInterface(
             self.root, self.assets, self
         )
-        self.game_interface: GameInterface = GameInterface(self.root, self.assets)
+        self.game_interface: GameInterface = GameInterface(self.root, self.assets, self)
         self.stone_buttons: dict[str, ttk.Button] = {}
         self.main_frame: ttk.Frame | None = None
         self.message_label: ttk.Label | None = None
         self.menu_file: tk.Menu | None = None
         self.populate_window()
-        # self.player_name: str = self.get_player_name()
+        #self.player_name: str = self.get_player_name()
         self.player_name: str = ""
         self.dog: DogActor = DogActor()
         self.initialize_dog()
         self.root.mainloop()
-
-    def get_player_name(self) -> str:
-        name = simpledialog.askstring(title=GAME_NAME, prompt="Nome do jogador")
-        return name if name else "User"
 
     def get_assets_subdirectory(self) -> str:
         return "default" if self.theme == Theme.DEFAULT else "alternative"
@@ -113,6 +110,7 @@ class PlayerInterface(DogPlayerInterface):
         else:
             self.theme = Theme.DEFAULT
         self.assets = self.load_assets()
+        self.main_menu_interface.update_widgets(self.assets)
         self.game_interface.update_widgets(self.assets)
 
     def initialize_message_label(self) -> None:
@@ -147,17 +145,21 @@ class PlayerInterface(DogPlayerInterface):
         self.menu_file.add_separator()
         self.menu_file.add_command(
             label="Sair",
-            command=self.end_window,
+            command=self.exit_game,
             activebackground="#EA9E9E",
             activeforeground="#000",
         )
 
-    def initialize_dog(self) -> None:
-        message = "Bem vindo, " + self.player_name + "!"
-        # messagebox.showinfo(title=GAME_NAME, message=message)
+    def get_player_name(self) -> str:
+        name = simpledialog.askstring(title=GAME_NAME, prompt="Nome do jogador")
+        if not name: name = "User"
+        message = "Bem vindo, " + name + "!"
+        self.notify(message)
+        return name
 
+    def initialize_dog(self) -> None:
         message = self.dog.initialize(self.player_name, self) + "."
-        # messagebox.showinfo(title="Dog Server", message=message)
+        #self.notify(message)
 
     def start_game(self) -> None:
         game_state = self.game_interface.get_game_state()
@@ -167,13 +169,11 @@ class PlayerInterface(DogPlayerInterface):
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
             self.game_interface.reset_game()
-            self.goto_game_screen()
+            self.switch_to_game_screen()
             self.update_gui()
 
     def receive_start(self, start_status: StartStatus) -> None:
-        self.game_interface.start_match(start_status.get_players())
-        self.goto_game_screen()
-        self.update_gui()
+        self.perform_start_match(start_status.get_players(), "Partida iniciada!")
 
     def receive_move(self, a_move) -> None:
         print("received move:", a_move)
@@ -182,6 +182,9 @@ class PlayerInterface(DogPlayerInterface):
     def receive_withdrawal_notification(self) -> None:
         print("received withdrawal notification")
         self.update_gui()
+
+    def notify(self, message: str) -> None:
+        messagebox.showinfo(title=GAME_NAME, message=message)
 
     def set_main_frame(self, new_frame: ttk.Frame) -> None:
         if self.main_frame is not None:
@@ -192,26 +195,31 @@ class PlayerInterface(DogPlayerInterface):
     def goto_main_menu(self) -> None:
         self.set_main_frame(self.main_menu_interface.get_frame())
 
-    def goto_game_screen(self) -> None:
+    def switch_to_game_screen(self) -> None:
         self.set_main_frame(self.game_interface.get_frame())
 
     def start_match(self) -> None:
         game_state = self.game_interface.get_game_state()
-        if game_state == GameState.TITLE:
-            answer = messagebox.askyesno("START", "Deseja iniciar uma nova partida?")
-            if answer:
-                status: StartStatus = self.dog.start_match(2)
-                code: str = status.get_code()
-                message: str = status.get_message()
-                if code == "0" or code == "1":
-                    messagebox.showinfo(title=GAME_NAME, message=message)
-                else:
-                    # TODO: pensar no que deve ser feito ao iniciar uma partida
-                    self.goto_game_screen()
-                    messagebox.showinfo(title=GAME_NAME, message=message)
-                    players = status.get_players()
-                    self.game_interface.start_match(players)
-                    self.update_gui()
+        if game_state != GameState.TITLE: return
+
+        answer = messagebox.askyesno("START", "Deseja iniciar uma nova partida?")
+        if not answer: return
+
+        status: StartStatus = self.dog.start_match(2)
+        code: str = status.get_code()
+        message: str = status.get_message()
+        if code == "0" or code == "1":
+            self.notify(message)
+            return
+
+        players = status.get_players()
+        self.perform_start_match(players, message)
+
+    def perform_start_match(self, players: list[list[str, str, str]], message: str) -> None:
+        self.game_interface.perform_start_match(players)
+        self.switch_to_game_screen()
+        self.update_gui()
+        self.notify(message)
 
     def go_to_main_menu(self):
         game_state = self.game_interface.get_game_state()
@@ -220,6 +228,9 @@ class PlayerInterface(DogPlayerInterface):
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
             self.goto_main_menu()
+
+    def send_move(self, move: dict[str, str]) -> None:
+        self.dog.send_move(move)
 
     def update_circle_visibility(self, index: int, state: str) -> None:
         self.game_interface.update_circle_visibility(index, state)
@@ -265,7 +276,6 @@ class PlayerInterface(DogPlayerInterface):
     def update_gui(self) -> None:
         self.update_message_label()
         self.update_menu_status()
-        # self.update_board(updated_board_frame)
 
-    def end_window(self) -> None:
-        quit()
+    def exit_game(self) -> None:
+        sys.exit(0)
