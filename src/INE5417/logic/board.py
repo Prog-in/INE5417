@@ -85,7 +85,7 @@ class Board:
         else:
             self.remove_stone(selected_triangle_index)
         self.update_move_info(self.triangles[selected_triangle_index])
-        return self.generate_dog_food()
+        return self.generate_dog_food(move_type, selected_triangle_index, ...)
 
     def decide_move_type(self) -> MoveType:
         if self.selected_stone.get_color() != self.local_player.get_color():
