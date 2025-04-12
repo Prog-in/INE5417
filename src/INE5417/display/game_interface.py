@@ -8,11 +8,13 @@ from ..utils.game_state import GameState
 
 
 class GameInterface(AbstractHelperInterface):
-    def __init__(self, root: tk.Tk, assets: dict[str, tk.PhotoImage]) -> None:
+    def __init__(
+        self, root: tk.Tk, assets: dict[str, tk.PhotoImage], player_interface
+    ) -> None:
         self.board: Board = Board()
         self.canvas_board: tk.Canvas | None = None
         self.stone_buttons: dict[str, tk.Button] = {}
-        super().__init__(root, assets)
+        super().__init__(root, assets, player_interface)
 
     def get_game_state(self) -> GameState:
         return self.board.get_game_state()
@@ -159,6 +161,11 @@ class GameInterface(AbstractHelperInterface):
     # NOTE: aqui ó
     def stone_selected(self, color: str, stone_value: int) -> None:
         print(f"pedra selecionada. cor = {color}, valor = {stone_value}")
+        if self.get_game_state() != GameState.PLAYER_MOVE_1:
+            ...
+        else:
+            self.board.stone_selected(color, stone_value)
+        self.player_interface.update_gui()
         # game_state = self.board.get_game_state()
         # if game_state == GameState.PLAYER_MOVE_1 or GameState.PLAYER_MOVE_2:
         # move_type = self.board.decide_move_type()
@@ -169,8 +176,11 @@ class GameInterface(AbstractHelperInterface):
         # self.update_gui()
 
     def circle_selected(self, circle_id: int) -> None:
-        print(f"círculo selecionado. id = {circle_id}")
         # TODO: enviar os dados referentes à jogada do outro jogador em send_move
-        # move_to_send = None
-        # #self.update_stone_state(move_to_send["stone_color"], int(move_to_send["stone_value"]), tk.HIDDEN)
-        # self.dog.send_move(move_to_send)
+        print(f"círculo selecionado. id = {circle_id}")
+        move_to_send = self.board.execute_move(circle_id)
+        print(f"{move_to_send=}")
+        self.update_stone_state(
+            move_to_send["stone_color"], int(move_to_send["stone_value"]), tk.HIDDEN
+        )
+        self.player_interface.send_move(move_to_send)
