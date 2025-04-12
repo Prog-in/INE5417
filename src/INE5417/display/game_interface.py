@@ -1,18 +1,20 @@
 import tkinter as tk
 from tkinter import ttk
 
-from .AbstractHelperInterface import AbstractHelperInterface
+from .abstract_helper_interface import AbstractHelperInterface
 from ..utils.constants import BOARD_WIDTH, BOARD_HEIGHT
 from ..logic.board import Board
 from ..utils.game_state import GameState
 
 
 class GameInterface(AbstractHelperInterface):
-    def __init__(self, root: tk.Tk, assets: dict[str, tk.PhotoImage]) -> None:
+    def __init__(
+        self, root: tk.Tk, assets: dict[str, tk.PhotoImage], player_interface
+    ) -> None:
         self.board: Board = Board()
         self.canvas_board: tk.Canvas | None = None
         self.stone_buttons: dict[str, tk.Button] = {}
-        super().__init__(root, assets)
+        super().__init__(root, assets, player_interface)
 
     def get_game_state(self) -> GameState:
         return self.board.get_game_state()
@@ -97,8 +99,8 @@ class GameInterface(AbstractHelperInterface):
 
         return game_frame
 
-    def start_match(self, players: list[list[str, str, str]]) -> None:
-        self.board.start_match(players)
+    def perform_start_match(self, players: list[list[str, str, str]]) -> None:
+        self.board.perform_start_match(players)
 
     def reset_game(self):
         self.board.reset_game()
@@ -122,7 +124,7 @@ class GameInterface(AbstractHelperInterface):
         # TODO: implementar a lógica de atualização das bordas dos triângulos
         ...
 
-    def update_widgets(self, new_assets: dict[str, tk.PhotoImage]):
+    def update_widgets(self, new_assets: dict[str, tk.PhotoImage]) -> None:
         self.assets = new_assets
         for button_name, stone_button in self.stone_buttons.items():
             asset_name = button_name[:-2]
@@ -159,6 +161,11 @@ class GameInterface(AbstractHelperInterface):
     # NOTE: aqui ó
     def stone_selected(self, color: str, stone_value: int) -> None:
         print(f"pedra selecionada. cor = {color}, valor = {stone_value}")
+        if self.get_game_state() != GameState.PLAYER_MOVE_1:
+            ...
+        else:
+            self.board.stone_selected(color, stone_value)
+        self.player_interface.update_gui()
         # game_state = self.board.get_game_state()
         # if game_state == GameState.PLAYER_MOVE_1 or GameState.PLAYER_MOVE_2:
         # move_type = self.board.decide_move_type()
@@ -169,8 +176,11 @@ class GameInterface(AbstractHelperInterface):
         # self.update_gui()
 
     def circle_selected(self, circle_id: int) -> None:
-        print(f"círculo selecionado. id = {circle_id}")
         # TODO: enviar os dados referentes à jogada do outro jogador em send_move
-        # move_to_send = None
-        # #self.update_stone_state(move_to_send["stone_color"], int(move_to_send["stone_value"]), tk.HIDDEN)
-        # self.dog.send_move(move_to_send)
+        print(f"círculo selecionado. id = {circle_id}")
+        move_to_send = self.board.execute_move(circle_id)
+        print(f"{move_to_send=}")
+        self.update_stone_state(
+            move_to_send["stone_color"], int(move_to_send["stone_value"]), tk.HIDDEN
+        )
+        self.player_interface.send_move(move_to_send)
