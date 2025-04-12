@@ -79,7 +79,7 @@ class PlayerInterface(DogPlayerInterface):
         )
 
         assets["circle"] = self.load_asset(
-            "circle", extension, (int(BOARD_WIDTH * 0.1), int(BOARD_HEIGHT * 0.1))
+            "circle", extension, (int(BOARD_WIDTH * 0.13), int(BOARD_HEIGHT * 0.13))
         )
 
         # assets das pedras
