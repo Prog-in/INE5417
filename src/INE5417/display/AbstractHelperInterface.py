@@ -15,6 +15,4 @@ class AbstractHelperInterface(ABC):
         pass
 
     def get_frame(self):
-        if not self.frame.winfo_exists():
-            self.frame = self.initialize_frame()
         return self.frame

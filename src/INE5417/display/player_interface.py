@@ -129,7 +129,7 @@ class PlayerInterface:
 
     def set_main_frame(self, new_frame: ttk.Frame) -> None:
         if self.main_frame is not None:
-            self.main_frame.destroy()
+            self.main_frame.pack_forget()
         self.main_frame = new_frame
         self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
 
