@@ -12,7 +12,7 @@ class Triangle:
     def insert_stone(self, stone: Stone) -> None:
         self.stone = stone
 
-    def remove_stone(self) -> Stone:
+    def remove_stone(self) -> Stone | None:
         if self.stone is not None:
             self.border_stone = self.stone
         tmp = self.stone
