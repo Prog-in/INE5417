@@ -108,10 +108,11 @@ class Board:
         selected_triangle.insert_stone(self.selected_stone)
         self.selected_stone.set_on_board(True)
 
-    def remove_stone(self, selected_triangle_index: int) -> None:
+    def remove_stone(self, selected_triangle_index: int) -> Stone:
         selected_triangle = self.triangles[selected_triangle_index]
         removed_stone = selected_triangle.remove_stone()
         removed_stone.set_on_board(False)
+        return removed_stone
 
     def generate_dog_food(
         self, move_type: MoveType, triangle_index: int, removed_stone: Stone | None, you_lost: bool
