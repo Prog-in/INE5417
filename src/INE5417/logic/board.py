@@ -80,16 +80,19 @@ class Board:
     def execute_move(self, selected_triangle_index: int) -> dict[str, str]:
         # atualizar self.last_move_info aqui?
         move_type = self.decide_move_type()
+        removed_stone = None
         if move_type == MoveType.INSERT:
             self.insert_stone(selected_triangle_index)
         else:
-            self.remove_stone(selected_triangle_index)
+            removed_stone = self.remove_stone(selected_triangle_index)
         self.update_move_info(self.triangles[selected_triangle_index])
-        return self.generate_dog_food(move_type, selected_triangle_index, ...)
+        return self.generate_dog_food(move_type, selected_triangle_index, removed_stone, self.local_player.get_winner())
 
     def decide_move_type(self) -> MoveType:
         if self.selected_stone.get_color() != self.local_player.get_color():
             return MoveType.ASK_AGAIN
+        #FIXME(Hélcio): O jogador clica NO TABULEIRO quando ele quer remover 
+        #uma pedra. Se fode aí pra arrumar.
         if self.selected_stone.get_on_board():
             return MoveType.REMOVE
         counter = 0
@@ -111,14 +114,16 @@ class Board:
         removed_stone.set_on_board(False)
 
     def generate_dog_food(
-        self, move_type: MoveType, triangle_index: int, stone_value: int, is_over: bool
+        self, move_type: MoveType, triangle_index: int, removed_stone: Stone | None, you_lost: bool
     ) -> dict[str, str]:
-        return {
+        move_to_send =  {
             "move_type": move_type.value,
             "triangle_index": str(triangle_index),
-            "stone_value": str(stone_value),
-            "is_over": str(is_over),
+            "you_lost": str(you_lost),
         }
+        if move_type == MoveType.INSERT:
+            move_to_send["stone_value"] = str(removed_stone.get_value())
+        return move_to_send
 
     def receive_move(self, a_move):
         if self.game_state == GameState.WAITING_OTHER_PLAYER:
