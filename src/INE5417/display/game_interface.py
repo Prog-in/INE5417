@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from .AbstractHelperInterface import AbstractHelperInterface
+from .abstract_helper_interface import AbstractHelperInterface
 from ..utils.constants import BOARD_WIDTH, BOARD_HEIGHT, COLOR_A, COLOR_B
 
 
