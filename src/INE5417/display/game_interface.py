@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from .AbstractHelperInterface import AbstractHelperInterface
+from .abstract_helper_interface import AbstractHelperInterface
 from ..utils.constants import BOARD_WIDTH, BOARD_HEIGHT
 from ..logic.board import Board
 from ..utils.game_state import GameState
@@ -99,8 +99,8 @@ class GameInterface(AbstractHelperInterface):
 
         return game_frame
 
-    def start_match(self, players: list[list[str, str, str]]) -> None:
-        self.board.start_match(players)
+    def perform_start_match(self, players: list[list[str, str, str]]) -> None:
+        self.board.perform_start_match(players)
 
     def reset_game(self):
         self.board.reset_game()
@@ -124,7 +124,7 @@ class GameInterface(AbstractHelperInterface):
         # TODO: implementar a lógica de atualização das bordas dos triângulos
         ...
 
-    def update_widgets(self, new_assets: dict[str, tk.PhotoImage]):
+    def update_widgets(self, new_assets: dict[str, tk.PhotoImage]) -> None:
         self.assets = new_assets
         for button_name, stone_button in self.stone_buttons.items():
             asset_name = button_name[:-2]

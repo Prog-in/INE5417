@@ -1,10 +1,6 @@
-import tkinter as tk
-from tkinter import ttk
-
 from .player import Player
 from .stone import Stone
 from .triangle import Triangle
-from ..utils.constants import COLOR_A, COLOR_B
 from ..utils.game_state import GameState
 from ..utils.move_type import MoveType
 
@@ -13,23 +9,19 @@ class Board:
     def __init__(self) -> None:
         # deve ser fixo pois, no caso de variável, deveria haver uma comunicação entre as instâncias do jogo
         # para acertar qual cor cada jogador usaria.
-        self.local_player: Player = Player(COLOR_A)
-        self.remote_player: Player = Player(COLOR_B)
+        self.local_player: Player = Player()
+        self.remote_player: Player = Player()
         self.game_state: GameState = GameState.TITLE
         self.last_move_info: None | tuple[int, Triangle] = None
         self.selected_stone: Stone | None = None
-        self.triangles: list[Triangle] = self.initialize_triagles()
+        self.triangles: list[Triangle] = [Triangle() for _ in range(12)]
 
     def get_players_colors(self) -> tuple[str, str]:
         return self.local_player.get_color(), self.remote_player.get_color()
 
-    def initialize_triagles(self) -> list[Triangle]:
-        return [Triangle() for _ in range(12)]
-
     def reset_game(self):
         self.local_player: Player = Player(self.local_player.get_color())
         self.remote_player: Player = Player(self.remote_player.get_color())
-        self.triangles = self.initialize_triagles()
 
     def calculate_range(self, last_move_info: None | tuple[int, int]) -> set[Triangle]:
         if last_move_info is None:
@@ -133,15 +125,23 @@ class Board:
     def receive_withdrawal_notification(self):
         self.game_state = GameState.ABANDONED_BY_OTHER_PLAYER
 
-    def start_match(self, players: list[list[str, str, str]]) -> None:
+    def update_player_instances(self, local_player_id: str, local_player_order: int, remote_player_id: str, remote_player_order: int) -> None:
+        self.local_player.reset()
+        self.remote_player.reset()
+
+        self.local_player.update(local_player_id, local_player_order)
+        self.remote_player.update(remote_player_id, remote_player_order)
+
+    def perform_start_match(self, players: list[list[str, str, str]]) -> None:
         player_a_name = players[0][0]
         player_a_id = players[0][1]
         player_a_order = int(players[0][2])
         player_b_name = players[1][0]
         player_b_id = players[1][1]
         player_b_order = int(players[1][2])
-        self.local_player.initialize(player_a_id, player_a_order)
-        self.remote_player.initialize(player_b_id, player_b_order)
+
+        self.update_player_instances(player_a_id, player_a_order, player_b_id, player_b_order)
+
         if player_a_order == 1:
             self.game_state = GameState.PLAYER_MOVE_1
         else:
