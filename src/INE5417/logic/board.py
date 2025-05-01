@@ -134,6 +134,14 @@ class Board:
     def receive_withdrawal_notification(self):
         self.game_state = GameState.ABANDONED_BY_OTHER_PLAYER
 
+    def reset_move_related_fields(self) -> None:
+        self.last_move_info = None
+        self.selected_stone = None
+
+    def remove_stones_from_triangles(self) -> None:
+        for triangle in self.triangles:
+            triangle.reset()
+
     def update_player_instances(
         self,
         local_player_id: str,
@@ -147,6 +155,18 @@ class Board:
         self.local_player.update(local_player_id, local_player_order)
         self.remote_player.update(remote_player_id, remote_player_order)
 
+    def verify_if_local_player_starts(local_player_order: int) -> bool:
+        if local_player_order == 1:
+            return True
+        else:
+            return False
+
+    def set_local_player_starts(self) -> None:
+        self.game_state = GameState.PLAYER_MOVE_1
+    
+    def set_remote_player_starts(self) -> None:
+        self.game_state = GameState.WAITING_OTHER_PLAYER
+
     def perform_start_match(self, players: list[list[str, str, str]]) -> None:
         player_a_name = players[0][0]
         player_a_id = players[0][1]
@@ -155,14 +175,15 @@ class Board:
         player_b_id = players[1][1]
         player_b_order = int(players[1][2])
 
+        self.reset_move_related_fields()
+        self.remove_stones_from_triangles()
         self.update_player_instances(
             player_a_id, player_a_order, player_b_id, player_b_order
         )
-
-        if player_a_order == 1:
-            self.game_state = GameState.PLAYER_MOVE_1
+        if self.verify_if_local_player_starts():
+            self.set_local_player_starts()
         else:
-            self.game_state = GameState.WAITING_OTHER_PLAYER
+            self.set_remote_player_starts()
 
     def get_game_state(self) -> GameState:
         return self.game_state
