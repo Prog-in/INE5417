@@ -78,13 +78,18 @@ class Board:
         else:
             removed_stone = self.remove_stone(selected_triangle_index)
         self.update_move_info(self.triangles[selected_triangle_index])
-        return self.generate_dog_food(move_type, selected_triangle_index, removed_stone, self.local_player.get_winner())
+        return self.generate_dog_food(
+            move_type,
+            selected_triangle_index,
+            removed_stone,
+            self.local_player.get_winner(),
+        )
 
     def decide_move_type(self) -> MoveType:
         if self.selected_stone.get_color() != self.local_player.get_color():
             return MoveType.ASK_AGAIN
-        #FIXME(Hélcio): O jogador clica NO TABULEIRO quando ele quer remover 
-        #uma pedra. Se fode aí pra arrumar.
+        # FIXME(Hélcio): O jogador clica NO TABULEIRO quando ele quer remover
+        # uma pedra. Se fode aí pra arrumar.
         if self.selected_stone.get_on_board():
             return MoveType.REMOVE
         counter = 0
@@ -107,9 +112,13 @@ class Board:
         return removed_stone
 
     def generate_dog_food(
-        self, move_type: MoveType, triangle_index: int, removed_stone: Stone | None, you_lost: bool
+        self,
+        move_type: MoveType,
+        triangle_index: int,
+        removed_stone: Stone | None,
+        you_lost: bool,
     ) -> dict[str, str]:
-        move_to_send =  {
+        move_to_send = {
             "move_type": move_type.value,
             "triangle_index": str(triangle_index),
             "you_lost": str(you_lost),
@@ -125,7 +134,13 @@ class Board:
     def receive_withdrawal_notification(self):
         self.game_state = GameState.ABANDONED_BY_OTHER_PLAYER
 
-    def update_player_instances(self, local_player_id: str, local_player_order: int, remote_player_id: str, remote_player_order: int) -> None:
+    def update_player_instances(
+        self,
+        local_player_id: str,
+        local_player_order: int,
+        remote_player_id: str,
+        remote_player_order: int,
+    ) -> None:
         self.local_player.reset()
         self.remote_player.reset()
 
@@ -140,7 +155,9 @@ class Board:
         player_b_id = players[1][1]
         player_b_order = int(players[1][2])
 
-        self.update_player_instances(player_a_id, player_a_order, player_b_id, player_b_order)
+        self.update_player_instances(
+            player_a_id, player_a_order, player_b_id, player_b_order
+        )
 
         if player_a_order == 1:
             self.game_state = GameState.PLAYER_MOVE_1
