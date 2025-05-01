@@ -1,9 +1,10 @@
 import sys
+from pathlib import Path
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 from tkinter import ttk
 
-from PIL import ImageTk, Image
+from PIL import ImageTk, Image, ImageFile
 
 from .game_interface import GameInterface
 from .main_menu_interface import MainMenuInterface
@@ -50,16 +51,29 @@ class PlayerInterface(DogPlayerInterface):
         self.initialize_dog()
         self.root.mainloop()
 
-    def initialize_window_root(self) -> tk.Tk:
-        # criar o root
-        root = tk.Tk()
-        # configurar o root
-        s = ttk.Style(root)
-        s.theme_use("clam")
-        s.configure("flat.TButton", borderwidth=0, bg="")
+    def create_root(self) -> tk.Tk:
+        return tk.Tk()
+
+    def create_style(self, root: tk.Tk) -> ttk.Style:
+        return ttk.Style(root)
+
+    def configure_style(self, style: ttk.Style) -> None:
+        style.theme_use("clam")
+        style.configure("flat.TButton", borderwidth=0, bg="")
+
+    def set_root_properties(self, root: tk.Tk) -> None:
         root.title(GAME_NAME)
         root.geometry(WINDOW_GEOMETRY)
         root.resizable(False, False)
+
+    def configure_root(self, root: tk.Tk) -> None:
+        style = self.create_style(root)
+        self.configure_style(style)
+        self.set_root_properties(root)
+
+    def initialize_window_root(self) -> tk.Tk:
+        root = self.create_root()
+        # configurar o root
         return root
 
     def initialize_main_menu_interface(self) -> MainMenuInterface:
@@ -76,50 +90,177 @@ class PlayerInterface(DogPlayerInterface):
         return Theme.DEFAULT
 
     def get_assets_subdirectory(self) -> str:
-        return "default" if self.theme == Theme.DEFAULT else "alternative"
+        if self.theme == Theme.DEFAULT:
+            return "default"
+        else: 
+            return "alternative"
+
+    def concatenate_image_path(self, subdirectory: Path, asset_filename: str) -> Path:
+        return RESOURCES_DIR / subdirectory / f"{asset_filename}"
+
+    def get_filepath(self, filename: str) -> Path:
+        subdirectory = self.get_assets_subdirectory()
+        return self.concatenate_image_path(subdirectory, filename)
+
+    def get_image(self, asset_filepath: Path) -> ImageFile.ImageFile:
+        return Image.open(asset_filepath)
+
+    def resize_image(self, image: ImageFile.ImageFile, dimensions: tuple[int, int]):
+        return image.resize(dimensions)
+
+    def image_to_photoimage(self, image) -> ImageTk.PhotoImage:
+        return ImageTk.PhotoImage(image)
 
     def load_asset(
         self, asset_filename: str, dimensions: tuple[int, int]
     ) -> ImageTk.PhotoImage:
-        asset_file = (
-            RESOURCES_DIR / self.get_assets_subdirectory() / f"{asset_filename}"
-        )
-        asset_image = Image.open(asset_file).resize((dimensions[0], dimensions[1]))
-        return ImageTk.PhotoImage(asset_image)
+        asset_filepath = self.get_filepath(asset_filename)
+        image = self.get_image(asset_filepath)
+        resized_image = self.resize_image(image, dimensions)
+        return self.image_to_photoimage(resized_image) 
 
     def construct_assets_dict(self) -> dict[str, ImageTk.PhotoImage]:
         return dict()
 
+    def remove_extension_from_filename(self, filename: str) -> str:
+        # captura o nome do arquivo sem a extensão ".png"
+        return filename[:-4]
+
+    def insert_key_pair_into_assets(self, key: str, value: tk.PhotoImage, assets: dict[str, tk.PhotoImage]) -> None:
+        assets[key] = value
+
+    def add_image_to_assets(self, filename: str, value: tk.PhotoImage, assets: dict[str, tk.PhotoImage]) -> None:
+        key = self.remove_extension_from_filename(filename)
+        self.insert_key_pair_into_assets(key, value, assets)
+
+    def dimensions_to_tuple(self, dimension_x: int, dimension_y: int) -> tuple[int, int]:
+        return (dimension_x, dimension_y)
+
+    def concatenate_strings(self, string1: str, string2: str) -> str:
+        return string1 + string2
+
+    def get_image_extension(self) -> str:
+        return ".png"
+
+    def get_menu_image_filename(self) -> str:
+        extension = self.get_image_extension()
+        return self.concatenate_strings("menu_image", extension)
+
+    def get_menu_image_dimension_x(self) -> int:
+        return WINDOW_WIDTH
+
+    def get_menu_image_dimension_y(self) -> int:
+        return WINDOW_HEIGHT
+
+    def get_menu_image_dimensions(self) -> tuple[int, int]:
+        dimension_x = self.get_menu_image_dimension_x()
+        dimension_y = self.get_menu_image_dimension_y()
+        return self.dimensions_to_tuple(dimension_x, dimension_y)
+
+    def load_menu_image(self, assets: dict[str, tk.PhotoImage]) -> None:
+        menu_image_filename = self.get_menu_image_filename()
+        menu_image_dimensions = self.get_menu_image_dimensions()
+        menu_image = self.load_asset(menu_image_filename, menu_image_dimensions)
+        self.add_image_to_assets(menu_image_filename, menu_image, assets)
+
+    def get_menu_button_image_filename(self) -> str:
+        extension = self.get_image_extension()
+        return self.concatenate_strings("menu_button", extension)
+
+    def get_menu_button_image_dimension_x(self) -> int:
+        return int(WINDOW_WIDTH / 3.2)
+
+    def get_menu_button_image_dimension_y(self) -> int:
+        return WINDOW_HEIGHT // 7
+
+    def get_menu_button_image_dimensions(self) -> tuple[int, int]:
+        dimension_x = self.get_menu_button_image_dimension_x()
+        dimension_y = self.get_menu_button_image_dimension_y()
+        return self.dimensions_to_tuple(dimension_x, dimension_y)
+
+    def load_menu_button_image(self, assets: dict[str, tk.PhotoImage]) -> None:
+        menu_button_image_filename = self.get_menu_button_image_filename() 
+        menu_button_image_dimensions = self.get_menu_button_image_dimensions()
+        menu_button_image = self.load_asset(menu_button_image_filename, menu_button_image_dimensions)
+        self.add_image_to_assets(menu_button_image_filename, menu_button_image, assets)
+
+    def get_board_image_filename(self) -> str:
+        extension = self.get_image_extension()
+        return self.concatenate_strings("board", extension)
+
+    def get_board_image_dimension_x(self) -> int:
+        return BOARD_WIDTH 
+
+    def get_board_image_dimension_y(self) -> int:
+        return BOARD_HEIGHT
+
+    def get_board_image_dimensions(self) -> tuple[int, int]:
+        dimension_x = self.get_board_image_dimension_x()
+        dimension_y = self.get_board_image_dimension_y()
+        return self.dimensions_to_tuple(dimension_x, dimension_y)
+
+    def load_board_image(self, assets: dict[str, tk.PhotoImage]) -> None:
+        board_image_filename = self.get_board_image_filename() 
+        board_image_dimensions = self.get_board_image_dimensions()
+        board_image = self.load_asset(board_image_filename, board_image_dimensions)
+        self.add_image_to_assets(board_image_filename, board_image, assets)
+
+    def get_circle_image_filename(self) -> str:
+        extension = self.get_image_extension()
+        return self.concatenate_strings("circle", extension)
+
+    def get_circle_image_dimension_x(self) -> int:
+        return int(BOARD_WIDTH * 0.13)
+
+    def get_circle_image_dimension_y(self) -> int:
+        return int(BOARD_HEIGHT * 0.13)
+
+    def get_circle_image_dimensions(self) -> tuple[int, int]:
+        dimension_x = self.get_circle_image_dimension_x()
+        dimension_y = self.get_circle_image_dimension_y()
+        return self.dimensions_to_tuple(dimension_x, dimension_y)
+
+    def load_circle_image(self, assets: dict[str, tk.PhotoImage]) -> None:
+        circle_image_filename = self.get_circle_image_filename()
+        circle_image_dimensions = self.get_circle_image_dimensions()
+        circle_image = self.load_asset(circle_image_filename, circle_image_dimensions)
+        self.add_image_to_assets(circle_image_filename, circle_image, assets)
+
+    def get_stone_image_dimension_x(self) -> int:
+        return int(WINDOW_WIDTH * 0.09)
+
+    def get_stone_image_dimension_y(self) -> int:
+        return int(WINDOW_HEIGHT * 0.09)
+    
+    def get_stone_image_dimensions(self) -> tuple[int, int]:
+        dimension_x = self.get_stone_image_dimension_x()
+        dimension_y = self.get_stone_image_dimension_y()
+        return self.dimensions_to_tuple(dimension_x, dimension_y)
+
+    def number_to_string(self, number: int) -> str:
+        return str(number)
+
+    def get_stone_image_filename(self, color: str, stone_value: int) -> str:
+        stone_value_str = self.number_to_string(stone_value)
+        filename_without_extension = self.concatenate_strings(color, stone_value_str)
+        extension = self.get_image_extension()
+        return self.concatenate_strings(filename_without_extension, extension)
+
+    def load_stones_images(self, assets) -> None:
+        stone_image_dimensions = self.get_stone_image_dimensions()
+        for color in [COLOR_A, COLOR_B]:
+            for stone_value in range(6):
+                stone_image_filename = self.get_stone_image_filename(color, stone_value)
+                stone_image = self.load_asset(stone_image_filename, stone_image_dimensions)
+                self.add_image_to_assets(stone_image_filename, stone_image, assets)
+
     def load_assets(self) -> dict[str, tk.PhotoImage]:
         assets = self.construct_assets_dict()
-
-        # TODO:
-        #  - criar um método para cada captura de nome de arquivo e dimensão de imagem.
-        #  - Armazenar o retorno de load_asset numa variável e adicionar em assets via método
-        #  - criar método pŕoprio para os carregamentos dos assets das pedras
-        menu_image_filename = "menu_image.png"
-        menu_image_dimensions = (BOARD_WIDTH, BOARD_HEIGHT)
-        assets["menu_image"] = self.load_asset(menu_image_filename, menu_image_dimensions)
-
-        menu_button_filename = "menu_button.png"
-        menu_button_dimensions = (int(WINDOW_WIDTH / 3.2), BOARD_HEIGHT // 7)
-        assets["menu_button"] = self.load_asset(menu_button_filename, menu_button_dimensions)
-
-        board_filename = "board.png"
-        board_dimensions = (BOARD_WIDTH, BOARD_HEIGHT)
-        assets["board"] = self.load_asset(board_filename, board_dimensions)
-
-        circle_filename = "circle.png"
-        circle_dimensions = (int(BOARD_WIDTH * 0.13), int(BOARD_HEIGHT * 0.13))
-        assets["circle"] = self.load_asset(circle_filename, circle_dimensions)
-
-        # assets das pedras
-        color_dimensions = (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09))
-        for color in [COLOR_A, COLOR_B]:
-            for i in range(6):
-                color_name = color + str(i)
-                color_filename = color_name + ".png"
-                assets[color_name] = self.load_asset(color_filename, color_dimensions)
+        self.load_menu_image(assets)
+        self.load_menu_button_image(assets)
+        self.load_board_image(assets)
+        self.load_circle_image(assets)
+        self.load_stones_images(assets)
         return assets
 
     def initialize_menu(self) -> tk.Menu:
