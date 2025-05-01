@@ -6,6 +6,10 @@ class Triangle:
         self.border_stone: Stone | None = None
         self.stone: Stone | None = None
 
+    def reset(self):
+        self.border_stone = None
+        self.stone = None
+
     def get_stone(self) -> Stone | None:
         return self.stone
 

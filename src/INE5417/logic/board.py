@@ -11,17 +11,23 @@ class Board:
         # para acertar qual cor cada jogador usaria.
         self.local_player: Player = Player()
         self.remote_player: Player = Player()
-        self.game_state: GameState = GameState.TITLE
+        self.game_state: GameState = self.get_title_state()
+        self.triangles: list[Triangle] = self.initialize_triangles()
         self.last_move_info: None | tuple[int, Triangle] = None
         self.selected_stone: Stone | None = None
-        self.triangles: list[Triangle] = [Triangle() for _ in range(12)]
+
+    def get_title_state(self) -> GameState:
+        return GameState.TITLE
+
+    def initialize_triangles(self) -> list[Triangle]:
+        return [Triangle() for _ in range(12)]
 
     def get_players_colors(self) -> tuple[str, str]:
         return self.local_player.get_color(), self.remote_player.get_color()
 
     def reset_game(self):
-        self.local_player: Player = Player(self.local_player.get_color())
-        self.remote_player: Player = Player(self.remote_player.get_color())
+        self.local_player.reset()
+        self.remote_player.reset()
 
     def calculate_range(self, last_move_info: None | tuple[int, int]) -> set[Triangle]:
         if last_move_info is None:
@@ -78,13 +84,18 @@ class Board:
         else:
             removed_stone = self.remove_stone(selected_triangle_index)
         self.update_move_info(self.triangles[selected_triangle_index])
-        return self.generate_dog_food(move_type, selected_triangle_index, removed_stone, self.local_player.get_winner())
+        return self.generate_dog_food(
+            move_type,
+            selected_triangle_index,
+            removed_stone,
+            self.local_player.get_winner(),
+        )
 
     def decide_move_type(self) -> MoveType:
         if self.selected_stone.get_color() != self.local_player.get_color():
             return MoveType.ASK_AGAIN
-        #FIXME(Hélcio): O jogador clica NO TABULEIRO quando ele quer remover 
-        #uma pedra. Se fode aí pra arrumar.
+        # FIXME(Hélcio): O jogador clica NO TABULEIRO quando ele quer remover
+        # uma pedra. Se fode aí pra arrumar.
         if self.selected_stone.get_on_board():
             return MoveType.REMOVE
         counter = 0
@@ -107,9 +118,13 @@ class Board:
         return removed_stone
 
     def generate_dog_food(
-        self, move_type: MoveType, triangle_index: int, removed_stone: Stone | None, you_lost: bool
+        self,
+        move_type: MoveType,
+        triangle_index: int,
+        removed_stone: Stone | None,
+        you_lost: bool,
     ) -> dict[str, str]:
-        move_to_send =  {
+        move_to_send = {
             "move_type": move_type.value,
             "triangle_index": str(triangle_index),
             "you_lost": str(you_lost),
@@ -125,14 +140,40 @@ class Board:
     def receive_withdrawal_notification(self):
         self.game_state = GameState.ABANDONED_BY_OTHER_PLAYER
 
-    def update_player_instances(self, local_player_id: str, local_player_order: int, remote_player_id: str, remote_player_order: int) -> None:
+    def reset_move_related_fields(self) -> None:
+        self.last_move_info = None
+        self.selected_stone = None
+
+    def remove_stones_from_triangles(self) -> None:
+        for triangle in self.triangles:
+            triangle.reset()
+
+    def update_player_instances(
+        self,
+        local_player_id: str,
+        local_player_order: int,
+        remote_player_id: str,
+        remote_player_order: int,
+    ) -> None:
         self.local_player.reset()
         self.remote_player.reset()
 
         self.local_player.update(local_player_id, local_player_order)
         self.remote_player.update(remote_player_id, remote_player_order)
 
-    def perform_start_match(self, players: list[list[str, str, str]]) -> None:
+    def verify_if_local_player_starts(local_player_order: int) -> bool:
+        if local_player_order == 1:
+            return True
+        else:
+            return False
+
+    def set_local_player_starts(self) -> None:
+        self.game_state = GameState.PLAYER_MOVE_1
+
+    def set_remote_player_starts(self) -> None:
+        self.game_state = GameState.WAITING_OTHER_PLAYER
+
+    def start_match(self, players: list[list[str]]) -> None:
         player_a_name = players[0][0]
         player_a_id = players[0][1]
         player_a_order = int(players[0][2])
@@ -140,20 +181,26 @@ class Board:
         player_b_id = players[1][1]
         player_b_order = int(players[1][2])
 
-        self.update_player_instances(player_a_id, player_a_order, player_b_id, player_b_order)
-
-        if player_a_order == 1:
-            self.game_state = GameState.PLAYER_MOVE_1
+        self.reset_move_related_fields()
+        self.remove_stones_from_triangles()
+        self.update_player_instances(
+            player_a_id, player_a_order, player_b_id, player_b_order
+        )
+        local_player_starts = self.verify_if_local_player_starts()
+        if local_player_starts:
+            self.set_local_player_starts()
         else:
-            self.game_state = GameState.WAITING_OTHER_PLAYER
+            self.set_remote_player_starts()
 
     def get_game_state(self) -> GameState:
         return self.game_state
 
     def get_turn_player(self) -> Player:
-        player = (
-            self.local_player if self.local_player.get_turn() else self.remote_player
-        )
+        local_player_turn = self.local_player.get_turn()
+        if local_player_turn:
+            player = self.local_player
+        else:
+            player = self.remote_player
         self.local_player.toggle_turn()
         self.remote_player.toggle_turn()
         return player

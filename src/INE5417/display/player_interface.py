@@ -1,6 +1,6 @@
 import sys
 import tkinter as tk
-from tkinter import messagebox, simpledialog
+from tkinter import messagebox
 from tkinter import ttk
 
 from PIL import ImageTk, Image
@@ -30,150 +30,198 @@ class PlayerInterface(DogPlayerInterface):
     def __init__(self) -> None:
         super().__init__()
         self.root: tk.Tk = tk.Tk()
-        self.theme: Theme = Theme.DEFAULT
+        self.initialize_gui_elements()
+        self.theme: Theme = self.get_default_theme()
         self.assets: dict[str, ImageTk.PhotoImage] = self.load_assets()
         self.main_menu_interface: MainMenuInterface = MainMenuInterface(
             self.root, self.assets, self
         )
         self.game_interface: GameInterface = GameInterface(self.root, self.assets, self)
-        self.stone_buttons: dict[str, ttk.Button] = {}
-        self.main_frame: ttk.Frame | None = None
-        self.message_label: ttk.Label | None = None
-        self.menu_file: tk.Menu | None = None
+
         self.populate_window()
-        #self.player_name: str = self.get_player_name()
+
+        main_menu_frame = self.main_menu_interface.get_frame()
+        self.set_main_frame(main_menu_frame)
+        self.map_main_frame()
+
+        # self.player_name: str = simpledialog.askstring(prompt="Nome do jogador")
         self.player_name: str = ""
         self.dog: DogActor = DogActor()
-        self.initialize_dog()
+        message = self.dog.initialize(self.player_name, self)
+        messagebox.showinfo(message=message)
         self.root.mainloop()
 
-    def get_assets_subdirectory(self) -> str:
-        return "default" if self.theme == Theme.DEFAULT else "alternative"
-
-    def load_asset(
-        self, asset_name: str, extension: str, dimensions: tuple[int, int]
-    ) -> ImageTk.PhotoImage:
-        asset_file = (
-            RESOURCES_DIR / self.get_assets_subdirectory() / f"{asset_name}.{extension}"
-        )
-        asset_image = Image.open(asset_file).resize((dimensions[0], dimensions[1]))
-        return ImageTk.PhotoImage(asset_image)
-
-    def load_assets(self) -> dict[str, tk.PhotoImage]:
-        assets = {}
-        extension = "png"
-
-        assets["menu_image"] = self.load_asset(
-            "menu_image", extension, (WINDOW_WIDTH, WINDOW_HEIGHT)
-        )
-
-        assets["menu_button"] = self.load_asset(
-            "menu_button", extension, (int(WINDOW_WIDTH / 3.2), BOARD_HEIGHT // 7)
-        )
-
-        assets["board"] = self.load_asset(
-            "board", extension, (BOARD_WIDTH, BOARD_HEIGHT)
-        )
-
-        assets["circle"] = self.load_asset(
-            "circle", extension, (int(BOARD_WIDTH * 0.13), int(BOARD_HEIGHT * 0.13))
-        )
-
-        # assets das pedras
-        for color in [COLOR_A, COLOR_B]:
-            for i in range(6):
-                color_name = color + str(i)
-                assets[color_name] = self.load_asset(
-                    color_name,
-                    extension,
-                    (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)),
-                )
-
-        return assets
-
-    def populate_window(self) -> None:
-        s = ttk.Style(self.root)
-        s.theme_use("clam")
-        s.configure("flat.TButton", borderwidth=0, bg="")
+    def initialize_gui_elements(self) -> None:
+        style = ttk.Style(self.root)
+        style.theme_use("clam")
+        style.configure("flat.TButton", borderwidth=0, bg="")
         self.root.title(GAME_NAME)
         self.root.geometry(WINDOW_GEOMETRY)
         self.root.resizable(False, False)
 
-        self.initialize_message_label()
-        self.initialize_menubar()
+        self.message_label: ttk.Label = ttk.Label(self.root, text=GAME_NAME, font=FONT)
 
-        self.goto_main_menu()
-
-    def switch_theme(self):
-        if self.theme == Theme.DEFAULT:
-            self.theme = Theme.ALTERNATIVE
-        else:
-            self.theme = Theme.DEFAULT
-        self.assets = self.load_assets()
-        self.main_menu_interface.update_widgets(self.assets)
-        self.game_interface.update_widgets(self.assets)
-
-    def initialize_message_label(self) -> None:
-        message_frame = ttk.Frame(self.root)
-        self.message_label = ttk.Label(message_frame, font=FONT)
-        self.update_message_label()
-        self.message_label.grid(row=0, column=1)
-        message_frame.pack(fill=tk.BOTH, side=tk.BOTTOM, expand=False)
-
-    def initialize_menubar(self) -> None:
         menubar = tk.Menu(self.root)
+        self.menu: tk.Menu = tk.Menu(menubar, bg="#FFFFFF")
         menubar.option_add("*tearOff", tk.FALSE)
-        self.root["menu"] = menubar
-
-        self.menu_file = tk.Menu(menubar, bg="#FFFFFF")
-        menubar.add_cascade(menu=self.menu_file, label="Menu")
-
-        self.menu_file.add_command(
+        menubar.add_cascade(menu=self.menu, label="Menu")
+        self.menu.add_command(
             label="Voltar ao menu principal",
             command=self.go_to_main_menu,
             activebackground="#A7CCE7",
             activeforeground="#000",
             state=tk.DISABLED,
         )
-        self.menu_file.add_command(
+        self.menu.add_command(
             label="Trocar conjunto de imagens",
             command=self.switch_theme,
             activebackground="#A7CCE7",
             activeforeground="#000",
             state=tk.DISABLED,
         )
-        self.menu_file.add_separator()
-        self.menu_file.add_command(
+        self.menu.add_separator()
+        self.menu.add_command(
             label="Sair",
             command=self.exit_game,
             activebackground="#EA9E9E",
             activeforeground="#000",
         )
+        self.main_frame: ttk.Frame | None = None
 
-    def get_player_name(self) -> str:
-        name = simpledialog.askstring(title=GAME_NAME, prompt="Nome do jogador")
-        if not name: name = "User"
-        message = "Bem vindo, " + name + "!"
-        self.notify(message)
-        return name
+    def get_default_theme(self) -> Theme:
+        return Theme.DEFAULT
 
-    def initialize_dog(self) -> None:
-        message = self.dog.initialize(self.player_name, self) + "."
-        #self.notify(message)
+    def load_assets(self) -> dict[str, tk.PhotoImage]:
+        if self.theme == Theme.DEFAULT:
+            assets_subdirectory = "default"
+        else:
+            assets_subdirectory = "alternative"
+        asset_dir_path = RESOURCES_DIR / assets_subdirectory
+        assets = {}
 
-    def start_game(self) -> None:
-        game_state = self.game_interface.get_game_state()
-        if (
-            game_state == GameState.TITLE
-            or game_state == GameState.MATCH_ENDED
-            or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
-        ):
-            self.game_interface.reset_game()
-            self.switch_to_game_screen()
-            self.update_gui()
+        menu_image_path = asset_dir_path / "menu_image.png"
+        menu_image = Image.open(menu_image_path).resize((WINDOW_WIDTH, WINDOW_HEIGHT))
+        resized_menu_image = ImageTk.PhotoImage(menu_image)
+        assets["menu_image"] = resized_menu_image
+
+        menu_button_image_path = asset_dir_path / "menu_button.png"
+        menu_button_image = Image.open(menu_button_image_path).resize(
+            (int(WINDOW_WIDTH / 3.2), BOARD_HEIGHT // 7)
+        )
+        resized_menu_button_image = ImageTk.PhotoImage(menu_button_image)
+        assets["menu_button"] = resized_menu_button_image
+
+        board_image_path = asset_dir_path / "board.png"
+        board_image = Image.open(board_image_path).resize((BOARD_WIDTH, BOARD_HEIGHT))
+        resized_board_image = ImageTk.PhotoImage(board_image)
+        assets["board"] = resized_board_image
+
+        circle_image_path = asset_dir_path / "circle.png"
+        circle_image = Image.open(circle_image_path).resize(
+            (int(BOARD_WIDTH * 0.13), int(BOARD_HEIGHT * 0.13))
+        )
+        resized_circle_image = ImageTk.PhotoImage(circle_image)
+        assets["circle"] = resized_circle_image
+
+        stone_colora_0_image_path = asset_dir_path / (COLOR_A + "0.png")
+        stone_colora_0_image = Image.open(stone_colora_0_image_path).resize((int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)))
+        resized_stone_colora_0_image = ImageTk.PhotoImage(stone_colora_0_image)
+        assets[COLOR_A + "0"] = resized_stone_colora_0_image
+
+        stone_colora_1_image_path = asset_dir_path / (COLOR_A + "1.png")
+        stone_colora_1_image = Image.open(stone_colora_1_image_path).resize((int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)))
+        resized_stone_colora_1_image = ImageTk.PhotoImage(stone_colora_1_image)
+        assets[COLOR_A + "1"] = resized_stone_colora_1_image
+
+        stone_colora_2_image_path = asset_dir_path / (COLOR_A + "2.png")
+        stone_colora_2_image = Image.open(stone_colora_2_image_path).resize((int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)))
+        resized_stone_colora_2_image = ImageTk.PhotoImage(stone_colora_2_image)
+        assets[COLOR_A + "2"] = resized_stone_colora_2_image
+
+        stone_colora_3_image_path = asset_dir_path / (COLOR_A + "3.png")
+        stone_colora_3_image = Image.open(stone_colora_3_image_path).resize((int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)))
+        resized_stone_colora_3_image = ImageTk.PhotoImage(stone_colora_3_image)
+        assets[COLOR_A + "3"] = resized_stone_colora_3_image
+
+        stone_colora_4_image_path = asset_dir_path / (COLOR_A + "4.png")
+        stone_colora_4_image = Image.open(stone_colora_4_image_path).resize((int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)))
+        resized_stone_colora_4_image = ImageTk.PhotoImage(stone_colora_4_image)
+        assets[COLOR_A + "4"] = resized_stone_colora_4_image
+
+        stone_colora_5_image_path = asset_dir_path / (COLOR_A + "5.png")
+        stone_colora_5_image = Image.open(stone_colora_5_image_path).resize((int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)))
+        resized_stone_colora_5_image = ImageTk.PhotoImage(stone_colora_5_image)
+        assets[COLOR_A + "5"] = resized_stone_colora_5_image
+
+        stone_colorb_0_image_path = asset_dir_path / (COLOR_B + "0.png")
+        stone_colorb_0_image = Image.open(stone_colorb_0_image_path).resize((int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)))
+        resized_stone_colorb_0_image = ImageTk.PhotoImage(stone_colorb_0_image)
+        assets[COLOR_B + "0"] = resized_stone_colorb_0_image
+
+        stone_colorb_1_image_path = asset_dir_path / (COLOR_B + "1.png")
+        stone_colorb_1_image = Image.open(stone_colorb_1_image_path).resize((int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)))
+        resized_stone_colorb_1_image = ImageTk.PhotoImage(stone_colorb_1_image)
+        assets[COLOR_B + "1"] = resized_stone_colorb_1_image
+
+        stone_colorb_2_image_path = asset_dir_path / (COLOR_B + "2.png")
+        stone_colorb_2_image = Image.open(stone_colorb_2_image_path).resize((int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)))
+        resized_stone_colorb_2_image = ImageTk.PhotoImage(stone_colorb_2_image)
+        assets[COLOR_B + "2"] = resized_stone_colorb_2_image
+
+        stone_colorb_3_image_path = asset_dir_path / (COLOR_B + "3.png")
+        stone_colorb_3_image = Image.open(stone_colorb_3_image_path).resize((int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)))
+        resized_stone_colorb_3_image = ImageTk.PhotoImage(stone_colorb_3_image)
+        assets[COLOR_B + "3"] = resized_stone_colorb_3_image
+
+        stone_colorb_4_image_path = asset_dir_path / (COLOR_B + "4.png")
+        stone_colorb_4_image = Image.open(stone_colorb_4_image_path).resize((int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)))
+        resized_stone_colorb_4_image = ImageTk.PhotoImage(stone_colorb_4_image)
+        assets[COLOR_B + "4"] = resized_stone_colorb_4_image
+
+        stone_colorb_5_image_path = asset_dir_path / (COLOR_B + "5.png")
+        stone_colorb_5_image = Image.open(stone_colorb_5_image_path).resize((int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)))
+        resized_stone_colorb_5_image = ImageTk.PhotoImage(stone_colorb_5_image)
+        assets[COLOR_B + "5"] = resized_stone_colorb_5_image
+
+        return assets
+
+    def set_main_frame(self, new_frame: ttk.Frame) -> None:
+        self.main_frame = new_frame
+
+    def map_main_frame(self) -> None:
+        self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
+
+    def get_theme(self) -> Theme:
+        return self.theme
+
+    def set_theme(self, new_theme: Theme) -> None:
+        self.theme = new_theme
+
+    def switch_theme(self) -> None:
+        theme = self.get_theme()
+        if theme == Theme.DEFAULT:
+            self.set_theme(Theme.ALTERNATIVE)
+        else:
+            self.set_theme(Theme.DEFAULT)
+        self.assets = self.load_assets()
+        self.main_menu_interface.update_widgets(self.assets)
+        self.game_interface.update_widgets(self.assets)
+
+    def populate_window(self) -> None:
+        menubar = self.menu.nametowidget(self.menu.winfo_parent())
+        self.root.config(menu=menubar)
+        self.message_label.pack(fill=tk.X, side=tk.BOTTOM, expand=False)
 
     def receive_start(self, start_status: StartStatus) -> None:
-        self.perform_start_match(start_status.get_players(), "Partida iniciada!")
+        players = start_status.get_players()
+        self.game_interface.start_match(players)
+        game_frame = self.game_interface.get_frame()
+        if self.is_main_screen_filled():
+            self.main_frame.pack_forget()
+        self.set_main_frame(game_frame)
+        self.map_main_frame()
+        self.update_gui()
+        messagebox.showinfo(message="Partida iniciada!")
 
     def receive_move(self, a_move) -> None:
         print("received move:", a_move)
@@ -183,43 +231,32 @@ class PlayerInterface(DogPlayerInterface):
         print("received withdrawal notification")
         self.update_gui()
 
-    def notify(self, message: str) -> None:
-        messagebox.showinfo(title=GAME_NAME, message=message)
-
-    def set_main_frame(self, new_frame: ttk.Frame) -> None:
+    def is_main_screen_filled(self) -> bool:
         if self.main_frame is not None:
-            self.main_frame.pack_forget()
-        self.main_frame = new_frame
-        self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
-
-    def goto_main_menu(self) -> None:
-        self.set_main_frame(self.main_menu_interface.get_frame())
-
-    def switch_to_game_screen(self) -> None:
-        self.set_main_frame(self.game_interface.get_frame())
+            return True
+        else:
+            return False
 
     def start_match(self) -> None:
-        game_state = self.game_interface.get_game_state()
-        if game_state != GameState.TITLE: return
-
         answer = messagebox.askyesno("START", "Deseja iniciar uma nova partida?")
-        if not answer: return
-
-        status: StartStatus = self.dog.start_match(2)
-        code: str = status.get_code()
-        message: str = status.get_message()
-        if code == "0" or code == "1":
-            self.notify(message)
-            return
-
-        players = status.get_players()
-        self.perform_start_match(players, message)
-
-    def perform_start_match(self, players: list[list[str, str, str]], message: str) -> None:
-        self.game_interface.perform_start_match(players)
-        self.switch_to_game_screen()
-        self.update_gui()
-        self.notify(message)
+        if answer:
+            game_state = self.game_interface.get_game_state()
+            if game_state == GameState.TITLE:
+                status: StartStatus = self.dog.start_match(2)
+                code: str = status.get_code()
+                message: str = status.get_message()
+                if code == "0" or code == "1":
+                    messagebox.showinfo(message=message)
+                elif code == "2":
+                    players = status.get_players()
+                    self.game_interface.start_match(players)
+                    game_frame = self.game_interface.get_frame()
+                    if self.is_main_screen_filled():
+                        self.main_frame.pack_forget()
+                    self.set_main_frame(game_frame)
+                    self.map_main_frame()
+                    self.update_gui()
+                    messagebox.showinfo(message=message)
 
     def go_to_main_menu(self):
         game_state = self.game_interface.get_game_state()
@@ -227,7 +264,11 @@ class PlayerInterface(DogPlayerInterface):
             game_state == GameState.MATCH_ENDED
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
-            self.goto_main_menu()
+            main_menu_frame = self.main_menu_interface.get_frame()
+            if self.is_main_screen_filled():
+                self.main_frame.pack_forget()
+            self.set_main_frame(main_menu_frame)
+            self.map_main_frame()
 
     def send_move(self, move: dict[str, str]) -> None:
         self.dog.send_move(move)
@@ -235,7 +276,8 @@ class PlayerInterface(DogPlayerInterface):
     def update_circle_visibility(self, index: int, state: str) -> None:
         self.game_interface.update_circle_visibility(index, state)
 
-    def update_message_label(self) -> None:
+    def update_gui(self) -> None:
+        # Atualizando o label de mensagens
         message = GAME_NAME + ": "
         match self.game_interface.get_game_state():
             case GameState.TITLE:
@@ -252,30 +294,25 @@ class PlayerInterface(DogPlayerInterface):
                 message += "Partida abandonada pelo outro jogador"
         self.message_label.configure(text=message)
         self.message_label.update()
-
-    def update_menu_status(self) -> None:
+        # atualizando os estados dos botões da barra de menu
         game_state = self.game_interface.get_game_state()
         if (
             game_state == GameState.MATCH_ENDED
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
-            self.menu_file.entryconfigure(0, state=tk.NORMAL)
+            self.menu.entryconfigure(0, state=tk.NORMAL)
         else:
-            self.menu_file.entryconfigure(0, state=tk.DISABLED)
+            self.menu.entryconfigure(0, state=tk.DISABLED)
 
         if (
             game_state == GameState.PLAYER_MOVE_1
             or game_state == GameState.PLAYER_MOVE_2
             or game_state == GameState.WAITING_OTHER_PLAYER
         ):
-            self.menu_file.entryconfigure(1, state=tk.NORMAL)
+            self.menu.entryconfigure(1, state=tk.NORMAL)
         else:
-            self.menu_file.entryconfigure(1, state=tk.DISABLED)
-        self.menu_file.update()
-
-    def update_gui(self) -> None:
-        self.update_message_label()
-        self.update_menu_status()
+            self.menu.entryconfigure(1, state=tk.DISABLED)
+        self.menu.update()
 
     def exit_game(self) -> None:
         sys.exit(0)

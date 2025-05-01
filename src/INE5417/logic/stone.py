@@ -1,8 +1,11 @@
 class Stone:
-    def __init__(self, color: str, i: int):
-        self.color: str = color
+    def __init__(self, i: int):
+        self.color: str | None = None
         self.value: int = i
         self.on_board: bool = False
+
+    def update(self, color: str):
+        self.color = color
 
     def get_color(self) -> str:
         return self.color
