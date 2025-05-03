@@ -30,29 +30,24 @@ from ..utils.theme import Theme
 class PlayerInterface(DogPlayerInterface):
     def __init__(self) -> None:
         super().__init__()
-        self.root: tk.Tk = self.initialize_window_root()
-        self.message_label: ttk.Label = self.initialize_message_label()
+        self.root: tk.Tk = tk.Tk()
+        self.message_label: ttk.Label = ttk.Label(self.root, font=FONT)
         self.menu: tk.Menu = self.initialize_menu()
         # main_frame é inicializado apenas quando a interface do menu principal
         # é renderizada
         self.main_frame: ttk.Frame | None = None
         self.theme: Theme = self.get_default_theme()
         self.assets: dict[str, ImageTk.PhotoImage] = self.load_assets()
-        self.main_menu_interface: MainMenuInterface = (
-            self.initialize_main_menu_interface()
-        )
-        self.game_interface: GameInterface = self.initialize_game_interface()
-        self.game_interface.initialize_domain_elements()
-        # renderização do menu principal
+        self.main_menu_interface: MainMenuInterface = MainMenuInterface(self.root, self.assets, self)
+        self.game_interface: GameInterface = GameInterface(self.root, self.assets, self)
         self.populate_window()
-        # self.player_name: str = self.get_player_name()
+        self.goto_main_menu()
+        #self.player_name: str = simpledialog.askstring(prompt="Nome do jogador")
         self.player_name: str = ""
-        self.dog: DogActor = self.instantiate_dog_actor()
-        self.initialize_dog()
+        self.dog: DogActor = DogActor()
+        message = self.dog.initialize(self.player_name, self)
+        messagebox.showinfo(message=message)
         self.root.mainloop()
-
-    def create_root(self) -> tk.Tk:
-        return tk.Tk()
 
     def create_style(self, root: tk.Tk) -> ttk.Style:
         return ttk.Style(root)
@@ -71,21 +66,6 @@ class PlayerInterface(DogPlayerInterface):
         self.configure_style(style)
         self.set_root_properties(root)
 
-    def initialize_window_root(self) -> tk.Tk:
-        root = self.create_root()
-        # configurar o root
-        return root
-
-    def initialize_main_menu_interface(self) -> MainMenuInterface:
-        return MainMenuInterface(self.root, self.assets, self)
-
-    def initialize_game_interface(self) -> GameInterface:
-        return GameInterface(self.root, self.assets, self)
-
-    def initialize_message_label(self) -> ttk.Label:
-        message_label = ttk.Label(self.root, font=FONT)
-        return message_label
-
     def get_default_theme(self) -> Theme:
         return Theme.DEFAULT
 
@@ -95,7 +75,7 @@ class PlayerInterface(DogPlayerInterface):
         else: 
             return "alternative"
 
-    def concatenate_image_path(self, subdirectory: Path, asset_filename: str) -> Path:
+    def concatenate_image_path(self, subdirectory: str, asset_filename: str) -> Path:
         return RESOURCES_DIR / subdirectory / f"{asset_filename}"
 
     def get_filepath(self, filename: str) -> Path:
@@ -133,124 +113,89 @@ class PlayerInterface(DogPlayerInterface):
         key = self.remove_extension_from_filename(filename)
         self.insert_key_pair_into_assets(key, value, assets)
 
-    def dimensions_to_tuple(self, dimension_x: int, dimension_y: int) -> tuple[int, int]:
-        return (dimension_x, dimension_y)
-
-    def concatenate_strings(self, string1: str, string2: str) -> str:
-        return string1 + string2
-
-    def get_image_extension(self) -> str:
-        return ".png"
-
     def get_menu_image_filename(self) -> str:
-        extension = self.get_image_extension()
-        return self.concatenate_strings("menu_image", extension)
-
-    def get_menu_image_dimension_x(self) -> int:
-        return WINDOW_WIDTH
-
-    def get_menu_image_dimension_y(self) -> int:
-        return WINDOW_HEIGHT
+        return "menu_image.png"
 
     def get_menu_image_dimensions(self) -> tuple[int, int]:
-        dimension_x = self.get_menu_image_dimension_x()
-        dimension_y = self.get_menu_image_dimension_y()
-        return self.dimensions_to_tuple(dimension_x, dimension_y)
+        return WINDOW_WIDTH, WINDOW_HEIGHT
 
     def load_menu_image(self, assets: dict[str, tk.PhotoImage]) -> None:
-        menu_image_filename = self.get_menu_image_filename()
-        menu_image_dimensions = self.get_menu_image_dimensions()
-        menu_image = self.load_asset(menu_image_filename, menu_image_dimensions)
-        self.add_image_to_assets(menu_image_filename, menu_image, assets)
+        image_filename = self.get_menu_image_filename()
+        image_dimensions = self.get_menu_image_dimensions()
+        image = self.load_asset(image_filename, image_dimensions)
+        self.add_image_to_assets(image_filename, image, assets)
 
     def get_menu_button_image_filename(self) -> str:
-        extension = self.get_image_extension()
-        return self.concatenate_strings("menu_button", extension)
-
-    def get_menu_button_image_dimension_x(self) -> int:
-        return int(WINDOW_WIDTH / 3.2)
-
-    def get_menu_button_image_dimension_y(self) -> int:
-        return WINDOW_HEIGHT // 7
+        return "menu_button.png"
 
     def get_menu_button_image_dimensions(self) -> tuple[int, int]:
-        dimension_x = self.get_menu_button_image_dimension_x()
-        dimension_y = self.get_menu_button_image_dimension_y()
-        return self.dimensions_to_tuple(dimension_x, dimension_y)
+        return int(WINDOW_WIDTH / 3.2), WINDOW_HEIGHT // 7
 
     def load_menu_button_image(self, assets: dict[str, tk.PhotoImage]) -> None:
-        menu_button_image_filename = self.get_menu_button_image_filename() 
-        menu_button_image_dimensions = self.get_menu_button_image_dimensions()
-        menu_button_image = self.load_asset(menu_button_image_filename, menu_button_image_dimensions)
-        self.add_image_to_assets(menu_button_image_filename, menu_button_image, assets)
+        image_filename = self.get_menu_button_image_filename()
+        image_dimensions = self.get_menu_button_image_dimensions()
+        image = self.load_asset(image_filename, image_dimensions)
+        self.add_image_to_assets(image_filename, image, assets)
 
     def get_board_image_filename(self) -> str:
-        extension = self.get_image_extension()
-        return self.concatenate_strings("board", extension)
-
-    def get_board_image_dimension_x(self) -> int:
-        return BOARD_WIDTH 
-
-    def get_board_image_dimension_y(self) -> int:
-        return BOARD_HEIGHT
+        return "board.png"
 
     def get_board_image_dimensions(self) -> tuple[int, int]:
-        dimension_x = self.get_board_image_dimension_x()
-        dimension_y = self.get_board_image_dimension_y()
-        return self.dimensions_to_tuple(dimension_x, dimension_y)
+        return BOARD_WIDTH, BOARD_HEIGHT
 
     def load_board_image(self, assets: dict[str, tk.PhotoImage]) -> None:
-        board_image_filename = self.get_board_image_filename() 
-        board_image_dimensions = self.get_board_image_dimensions()
-        board_image = self.load_asset(board_image_filename, board_image_dimensions)
-        self.add_image_to_assets(board_image_filename, board_image, assets)
+        image_filename = self.get_board_image_filename()
+        image_dimensions = self.get_board_image_dimensions()
+        image = self.load_asset(image_filename, image_dimensions)
+        self.add_image_to_assets(image_filename, image, assets)
 
     def get_circle_image_filename(self) -> str:
-        extension = self.get_image_extension()
-        return self.concatenate_strings("circle", extension)
-
-    def get_circle_image_dimension_x(self) -> int:
-        return int(BOARD_WIDTH * 0.13)
-
-    def get_circle_image_dimension_y(self) -> int:
-        return int(BOARD_HEIGHT * 0.13)
+        return "circle.png"
 
     def get_circle_image_dimensions(self) -> tuple[int, int]:
-        dimension_x = self.get_circle_image_dimension_x()
-        dimension_y = self.get_circle_image_dimension_y()
-        return self.dimensions_to_tuple(dimension_x, dimension_y)
+        return int(BOARD_WIDTH * 0.13), int(BOARD_HEIGHT * 0.13)
 
     def load_circle_image(self, assets: dict[str, tk.PhotoImage]) -> None:
-        circle_image_filename = self.get_circle_image_filename()
-        circle_image_dimensions = self.get_circle_image_dimensions()
-        circle_image = self.load_asset(circle_image_filename, circle_image_dimensions)
-        self.add_image_to_assets(circle_image_filename, circle_image, assets)
+        image_filename = self.get_circle_image_filename()
+        image_dimensions = self.get_circle_image_dimensions()
+        image = self.load_asset(image_filename, image_dimensions)
+        self.add_image_to_assets(image_filename, image, assets)
 
-    def get_stone_image_dimension_x(self) -> int:
-        return int(WINDOW_WIDTH * 0.09)
-
-    def get_stone_image_dimension_y(self) -> int:
-        return int(WINDOW_HEIGHT * 0.09)
-    
     def get_stone_image_dimensions(self) -> tuple[int, int]:
-        dimension_x = self.get_stone_image_dimension_x()
-        dimension_y = self.get_stone_image_dimension_y()
-        return self.dimensions_to_tuple(dimension_x, dimension_y)
+        return int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09)
+
+    def get_players_colors(self) -> tuple[str, str]:
+        return (COLOR_A, COLOR_B)
+
+    def get_players_colors_length(self, players_colors: tuple[str, str]) -> int:
+        return len(players_colors)
+
+    def get_element_from_players_colors(self, players_colors: tuple[str, str], index: int) -> str:
+        return players_colors[index]
 
     def number_to_string(self, number: int) -> str:
         return str(number)
 
+    def concatenate_strings(self, string1: str, string2: str) -> str:
+        return string1 + string2
+
+    def get_stone_image_extension(self) -> str:
+        return ".png"
+
     def get_stone_image_filename(self, color: str, stone_value: int) -> str:
         stone_value_str = self.number_to_string(stone_value)
         filename_without_extension = self.concatenate_strings(color, stone_value_str)
-        extension = self.get_image_extension()
+        extension = self.get_stone_image_extension()
         return self.concatenate_strings(filename_without_extension, extension)
 
-    def load_stones_images(self, assets) -> None:
+    def load_stones_images(self, assets: dict[str, tk.PhotoImage]) -> None:
         stone_image_dimensions = self.get_stone_image_dimensions()
-        for color in [COLOR_A, COLOR_B]:
-            for stone_value in range(6):
-                stone_image_filename = self.get_stone_image_filename(color, stone_value)
+        players_colors = self.get_players_colors()
+        colors_length = self.get_players_colors_length(players_colors)
+        for i in range(colors_length):
+            color = self.get_element_from_players_colors(players_colors, i)
+            for j in range(6):
+                stone_image_filename = self.get_stone_image_filename(color, j)
                 stone_image = self.load_asset(stone_image_filename, stone_image_dimensions)
                 self.add_image_to_assets(stone_image_filename, stone_image, assets)
 
@@ -313,22 +258,6 @@ class PlayerInterface(DogPlayerInterface):
     def populate_window(self) -> None:
         self.place_menu()
         self.place_message_label()
-        self.goto_main_menu()
-
-    def get_player_name(self) -> str:
-        name = simpledialog.askstring(title=GAME_NAME, prompt="Nome do jogador")
-        if not name:
-            name = "User"
-        message = "Bem vindo, " + name + "!"
-        self.notify(message)
-        return name
-
-    def instantiate_dog_actor(self) -> DogActor:
-        return DogActor()
-
-    def initialize_dog(self) -> None:
-        message = self.dog.initialize(self.player_name, self) + "."
-        # self.notify(message)
 
     def start_game(self) -> None:
         game_state = self.game_interface.get_game_state()
@@ -351,9 +280,6 @@ class PlayerInterface(DogPlayerInterface):
     def receive_withdrawal_notification(self) -> None:
         print("received withdrawal notification")
         self.update_gui()
-
-    def notify(self, message: str) -> None:
-        messagebox.showinfo(title=GAME_NAME, message=message)
 
     def is_main_frame_populated(self) -> bool:
         return self.main_frame is not None
@@ -389,7 +315,7 @@ class PlayerInterface(DogPlayerInterface):
         code: str = status.get_code()
         message: str = status.get_message()
         if code == "0" or code == "1":
-            self.notify(message)
+            messagebox.showinfo(message=message)
             return
         players = status.get_players()
         self.perform_start_match(players, message)
@@ -400,7 +326,7 @@ class PlayerInterface(DogPlayerInterface):
         self.game_interface.perform_start_match(players)
         self.goto_game_screen()
         self.update_gui()
-        self.notify(message)
+        messagebox.showinfo(message=message)
 
     def go_to_main_menu(self):
         game_state = self.game_interface.get_game_state()

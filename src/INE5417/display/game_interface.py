@@ -11,13 +11,10 @@ class GameInterface(AbstractHelperInterface):
     def __init__(
         self, root: tk.Tk, assets: dict[str, tk.PhotoImage], player_interface
     ) -> None:
-        self.board: Board | None = None
+        self.board: Board = Board()
         self.canvas_board: tk.Canvas | None = None
-        self.stone_buttons: dict[str, tk.Button] = {}
+        self.stone_buttons: dict[str, tk.Button] = dict()
         super().__init__(root, assets, player_interface)
-
-    def initialize_domain_elements(self) -> None:
-        self.board = Board()
 
     def get_game_state(self) -> GameState:
         return self.board.get_game_state()

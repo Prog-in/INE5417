@@ -11,17 +11,23 @@ class Board:
         # para acertar qual cor cada jogador usaria.
         self.local_player: Player = Player()
         self.remote_player: Player = Player()
-        self.game_state: GameState = GameState.TITLE
+        self.game_state: GameState = self.get_title_state()
+        self.triangles: list[Triangle] = self.initialize_triangles()
         self.last_move_info: None | tuple[int, Triangle] = None
         self.selected_stone: Stone | None = None
-        self.triangles: list[Triangle] = [Triangle() for _ in range(12)]
+
+    def get_title_state(self) -> GameState:
+        return GameState.TITLE
+
+    def initialize_triangles(self) -> list[Triangle]:
+        return [Triangle() for _ in range(12)]
 
     def get_players_colors(self) -> tuple[str, str]:
         return self.local_player.get_color(), self.remote_player.get_color()
 
     def reset_game(self):
-        self.local_player: Player = Player(self.local_player.get_color())
-        self.remote_player: Player = Player(self.remote_player.get_color())
+        self.local_player.reset()
+        self.remote_player.reset()
 
     def calculate_range(self, last_move_info: None | tuple[int, int]) -> set[Triangle]:
         if last_move_info is None:

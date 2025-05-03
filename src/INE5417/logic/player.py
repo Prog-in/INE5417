@@ -8,15 +8,16 @@ class Player:
         self.turn: bool = False
         self.winner: bool = False
         self.color: str | None = None
-        self.stones: list[list[Stone]] = [
-            [Stone(self.color, i), Stone(self.color, i)] for i in range(6)
-        ]
+        self.stones: list[list[Stone]] = self.initialize_player_stones()
+
+    def initialize_player_stones(self) -> list[list[Stone]]:
+        return [[Stone(self.color, i), Stone(self.color, i)] for i in range(6)]
 
     def reset(self) -> None:
         self.id: str = ""
         self.turn: bool = False
         self.winner: bool = False
-        self.stones = [[Stone(self.color, i), Stone(self.color, i)] for i in range(6)]
+        self.stones = self.initialize_player_stones()
 
     def update(self, player_id: str, player_order: int) -> None:
         if player_order == 1:
