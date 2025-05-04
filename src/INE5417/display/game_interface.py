@@ -99,8 +99,8 @@ class GameInterface(AbstractHelperInterface):
 
         return game_frame
 
-    def perform_start_match(self, players: list[list[str, str, str]]) -> None:
-        self.board.perform_start_match(players)
+    def start_match(self, players: list[list[str]]) -> None:
+        self.board.start_match(players)
 
     def reset_game(self):
         self.board.reset_game()

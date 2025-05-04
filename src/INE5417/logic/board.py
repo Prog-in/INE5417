@@ -169,11 +169,11 @@ class Board:
 
     def set_local_player_starts(self) -> None:
         self.game_state = GameState.PLAYER_MOVE_1
-    
+
     def set_remote_player_starts(self) -> None:
         self.game_state = GameState.WAITING_OTHER_PLAYER
 
-    def perform_start_match(self, players: list[list[str, str, str]]) -> None:
+    def start_match(self, players: list[list[str]]) -> None:
         player_a_name = players[0][0]
         player_a_id = players[0][1]
         player_a_order = int(players[0][2])
@@ -186,7 +186,8 @@ class Board:
         self.update_player_instances(
             player_a_id, player_a_order, player_b_id, player_b_order
         )
-        if self.verify_if_local_player_starts():
+        local_player_starts = self.verify_if_local_player_starts()
+        if local_player_starts:
             self.set_local_player_starts()
         else:
             self.set_remote_player_starts()
@@ -195,9 +196,11 @@ class Board:
         return self.game_state
 
     def get_turn_player(self) -> Player:
-        player = (
-            self.local_player if self.local_player.get_turn() else self.remote_player
-        )
+        local_player_turn = self.local_player.get_turn()
+        if local_player_turn:
+            player = self.local_player
+        else:
+            player = self.remote_player
         self.local_player.toggle_turn()
         self.remote_player.toggle_turn()
         return player
