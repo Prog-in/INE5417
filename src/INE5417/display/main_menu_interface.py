@@ -41,11 +41,13 @@ class MainMenuInterface(AbstractHelperInterface):
         self.menu_canvas.tag_bind(
             menu_button,
             "<ButtonRelease-1>",
-            lambda event: self.player_interface.start_match(),
+            lambda event: self.start_match(),
         )
         self.menu_canvas.grid(row=0, column=0, sticky=tk.NSEW)
-
         return menu_frame
+
+    def start_match(self) -> None:
+        self.player_interface.start_match()
 
     def update_widgets(self, new_assets: dict[str, tk.PhotoImage]) -> None:
         self.assets = new_assets
