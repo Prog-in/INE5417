@@ -51,8 +51,11 @@ class Player:
     def set_winner(self) -> None:
         self.winner = True
 
-    def get_stone(self, value: int) -> Stone | None:
-        return None if len(self.stones[value]) == 0 else self.stones[value][-1]
+    def get_stone(self, value: int, in_left: bool) -> Stone | None:
+        if len(self.stones[value]) == 0:
+            return None
+        else:
+            return self.stones[value][not in_left]
 
     def remove_stone(self, value: int) -> None:
         if len(self.stones[value]) > 0:
