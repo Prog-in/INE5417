@@ -1,10 +1,11 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 from .abstract_helper_interface import AbstractHelperInterface
 from ..utils.constants import BOARD_WIDTH, BOARD_HEIGHT
 from ..logic.board import Board
 from ..utils.game_state import GameState
+from ..utils.move_type import MoveType
 
 
 class GameInterface(AbstractHelperInterface):
@@ -30,14 +31,14 @@ class GameInterface(AbstractHelperInterface):
             button_stone_1 = ttk.Button(
                 player_stones_frame,
                 image=self.assets[f"{player_color}{i}"],
-                command=lambda index=i: self.stone_selected(player_color, index),
+                command=lambda index=i: self.stone_selected(player_color, index, True),
                 state=tk.NORMAL if is_local else tk.DISABLED,
                 style="flat.TButton",
             )
             button_stone_2 = ttk.Button(
                 player_stones_frame,
                 image=self.assets[f"{player_color}{i}"],
-                command=lambda index=i: self.stone_selected(player_color, index),
+                command=lambda index=i: self.stone_selected(player_color, index, False),
                 state=tk.NORMAL if is_local else tk.DISABLED,
                 style="flat.TButton",
             )
@@ -82,7 +83,7 @@ class GameInterface(AbstractHelperInterface):
             self.canvas_board.tag_bind(
                 button_triangle,
                 "<ButtonRelease-1>",
-                lambda event, index=i: self.circle_selected(index),
+                lambda event, index=i: self.position_selected(index),
             )
 
         local_player_color, remote_player_color = self.board.get_players_colors()
@@ -158,29 +159,18 @@ class GameInterface(AbstractHelperInterface):
             f"circle{index}", image=self.assets[f"{asset_name}"]
         )
 
-    # NOTE: aqui ó
-    def stone_selected(self, color: str, stone_value: int) -> None:
-        print(f"pedra selecionada. cor = {color}, valor = {stone_value}")
-        if self.get_game_state() != GameState.PLAYER_MOVE_1:
-            ...
-        else:
-            self.board.stone_selected(color, stone_value)
-        self.player_interface.update_gui()
-        # game_state = self.board.get_game_state()
-        # if game_state == GameState.PLAYER_MOVE_1 or GameState.PLAYER_MOVE_2:
-        # move_type = self.board.decide_move_type()
-        # valid_circles = self.board.generate_valid_move_list()
-        # print("valid circles: ", valid_circles)
-        # for circle_index in valid_circles:
-        #     self.update_circle_visibility(circle_index, tk.NORMAL)
-        # self.update_gui()
+    def stone_selected(self, color: str, stone_value: int, in_left: bool) -> None:
+        game_state = self.get_game_state()
+        if game_state == GameState.PLAYER_MOVE_1 or game_state == GameState.PLAYER_MOVE_2:
+            self.board.stone_selected(color, stone_value, in_left)
 
-    def circle_selected(self, circle_id: int) -> None:
-        # TODO: enviar os dados referentes à jogada do outro jogador em send_move
-        print(f"círculo selecionado. id = {circle_id}")
-        move_to_send = self.board.execute_move(circle_id)
-        print(f"{move_to_send=}")
-        self.update_stone_state(
-            move_to_send["stone_color"], int(move_to_send["stone_value"]), tk.HIDDEN
-        )
-        self.player_interface.send_move(move_to_send)
+    def position_selected(self, position_id: int) -> None:
+        move_type = self.board.position_selected(position_id)
+        if move_type == MoveType.ASK_AGAIN:
+            messagebox.showinfo(message="Jogada inválida. Tente novamente")
+        else:
+            move_to_send = self.board.get_move_to_send()
+            self.update_stone_state(
+                move_to_send["stone_color"], int(move_to_send["stone_value"]), tk.HIDDEN
+            )
+            self.player_interface.send_move(move_to_send)
