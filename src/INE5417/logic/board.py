@@ -13,14 +13,18 @@ class Board:
         self.remote_player: Player = Player()
         self.game_state: GameState = self.get_title_state()
         self.triangles: list[Triangle] = self.initialize_triangles()
-        self.last_move_info: None | tuple[int, Triangle] = None
+        self.previous_move_info: None | tuple[MoveType, int, int] = None
+        self.last_local_player_move_info: None | tuple[MoveType, int, int] = None
         self.selected_stone: Stone | None = None
 
     def get_title_state(self) -> GameState:
         return GameState.TITLE
 
     def initialize_triangles(self) -> list[Triangle]:
-        return [Triangle() for _ in range(12)]
+        triangles = []
+        for i in range(12):
+            triangles.append(Triangle(i))
+        return triangles
 
     def get_players_colors(self) -> tuple[str, str]:
         return self.local_player.get_color(), self.remote_player.get_color()
@@ -29,27 +33,43 @@ class Board:
         self.local_player.reset()
         self.remote_player.reset()
 
-    def calculate_range(self, last_move_info: None | tuple[int, int]) -> set[Triangle]:
-        if last_move_info is None:
-            return set(self.triangles)
-        value, position = last_move_info
-        if value == 0:
-            for i in range(1, 12):
-                var = set()
-                left = self.triangles[(position - i) % 12]
-                right = self.triangles[(position + i) % 12]
-                if left.is_free():
-                    var.add(left)
-                if right.is_free():
-                    var.add(right)
-                if len(var):
-                    return var
-            return set()
-        else:
-            return {
-                self.triangles[(position - value) % 12],
-                self.triangles[(position + value) % 12],
-            }
+    def calculate_range(self, previous_move_stone_value: int, previous_move_position: int) -> set[Triangle]:
+        return {
+            self.triangles[(previous_move_position - previous_move_stone_value) % 12],
+            self.triangles[(previous_move_position + previous_move_stone_value) % 12],
+        }
+
+    def calculate_range_removed_old_stone(self, previous_move_position: int) -> set[Triangle]:
+        valid_positions = set()
+        for i in range(1, 12):
+            left = self.triangles[(previous_move_position - i) % 12]
+            right = self.triangles[(previous_move_position + i) % 12]
+            if not left.is_free():
+                stone = left.get_stone()
+                stone_color = stone.get_color()
+                if stone_color == self.local_player.get_color():
+                    valid_positions.add(left)
+            if not right.is_free():
+                stone = right.get_stone()
+                stone_color = stone.get_color()
+                if stone_color == self.local_player.get_color():
+                    valid_positions.add(right)
+            if len(valid_positions) > 0:
+                break
+        return valid_positions
+
+    def calculate_range_inserted_old_stone(self, previous_move_position: int) -> set[Triangle]:
+        valid_positions = set()
+        for i in range(1, 12):
+            left = self.triangles[(previous_move_position - i) % 12]
+            right = self.triangles[(previous_move_position + i) % 12]
+            if left.is_free():
+                valid_positions.add(left)
+            if right.is_free():
+                valid_positions.add(right)
+            if len(valid_positions) > 0:
+                break
+        return valid_positions
 
     def generate_valid_triangles(
         self, candidate_moves: set[Triangle]
@@ -72,24 +92,121 @@ class Board:
         self.last_move_info = (self.selected_stone, selected_triangle)
         self.selected_stone = None
 
-    def stone_selected(self, color: str, stone_value: int) -> None:
-        self.selected_stone = stone_value
+    def stone_selected(self, color: str, stone_value: int, in_left: bool) -> None:
+        self.selected_stone = self.local_player.get_stone(stone_value, in_left)
 
-    def execute_move(self, selected_triangle_index: int) -> dict[str, str]:
-        # atualizar self.last_move_info aqui?
-        move_type = self.decide_move_type()
-        removed_stone = None
-        if move_type == MoveType.INSERT:
-            self.insert_stone(selected_triangle_index)
+    def there_was_a_previous_move(self) -> bool:
+        if self.last_move_info is None:
+            return False
         else:
-            removed_stone = self.remove_stone(selected_triangle_index)
-        self.update_move_info(self.triangles[selected_triangle_index])
-        return self.generate_dog_food(
-            move_type,
-            selected_triangle_index,
-            removed_stone,
-            self.local_player.get_winner(),
-        )
+            return True
+
+    def user_already_selected_a_stone(self) -> bool:
+        if self.selected_stone is None:
+            return False
+        else:
+            return True
+
+    def get_is_first_local_player_move(self) -> bool:
+        if self.last_local_player_move_info is None:
+            return False
+        else:
+            return True
+
+    def remove_stone_from_user_inventory(self) -> None:
+        ...
+
+    def get_previous_move_type(self) -> MoveType:
+        return self.previous_move_info[0]
+
+    def get_previous_move_position(self) -> int:
+        return self.previous_move_info[1]
+
+    def get_previous_move_stone_value(self) -> int:
+        return self.previous_move_info[2]
+
+    def get_last_local_player_move_type(self) -> MoveType:
+        return self.last_local_player_move_info[0]
+
+    def get_last_local_player_move_position(self) -> int:
+        return self.last_local_player_move_info[1]
+
+    def get_last_local_player_move_stone_value(self) -> int:
+        return self.last_local_player_move_info[2]
+
+    def get_selected_stone(self) -> Stone | None:
+        return self.selected_stone
+
+    def register_irregular_move(self) -> MoveType:
+        return MoveType.ASK_AGAIN
+
+    def is_selected_position_valid(self, selected_position_index: int, valid_positions: set[Triangle]) -> bool:
+        is_valid = False
+        for valid_position in valid_positions:
+            position_index = valid_position.get_index()
+            if selected_position_index == position_index:
+                is_valid = True
+                break
+        return is_valid
+
+    def position_selected(self, selected_position_index: int) -> MoveType:
+        there_was_a_previous_move = self.there_was_a_previous_move()
+        if not there_was_a_previous_move:
+            previous_move_position = self.get_previous_move_position()
+            previous_move_stone_value = self.get_previous_move_stone_value()
+            if previous_move_stone_value == 0:
+                previous_move_type = self.get_previous_move_type()
+                if previous_move_type == MoveType.REMOVE:
+                    valid_positions = self.calculate_range_removed_old_stone(previous_move_position)
+                    is_valid = self.is_selected_position_valid(selected_position_index, valid_positions)
+                    if is_valid:
+                        ...
+                    else:
+                        return self.register_irregular_move()
+                else:
+                    valid_positions = self.calculate_range_inserted_old_stone(previous_move_position)
+                    is_valid = self.is_selected_position_valid(selected_position_index, valid_positions)
+                    if is_valid:
+                        ...
+                    else:
+                        return self.register_irregular_move()
+            else:
+                valid_positions = self.calculate_range(previous_move_stone_value, previous_move_position)
+                is_valid = self.is_selected_position_valid(selected_position_index, valid_positions)
+                if is_valid:
+                    ...
+                else:
+                    return self.register_irregular_move()
+        else: # primeiro lance
+            user_already_selected_a_stone = self.user_already_selected_a_stone()
+            if user_already_selected_a_stone:
+                is_first_local_player_move = self.get_is_first_local_player_move()
+                if is_first_local_player_move:
+                    self.insert_stone(selected_position_index)
+                    self.remove_stone_from_user_inventory()
+                    # registrar posição envolvida na jogada local + continuação
+                else:
+                    last_local_player_move_type = self.get_last_local_player_move_type()
+                    if last_local_player_move_type == MoveType.REMOVE:
+                        last_local_player_move_position = self.get_last_local_player_move_position()
+                        if last_local_player_move_position == selected_position_index:
+                            last_local_player_move_stone_value = self.get_last_local_player_move_stone_value()
+                            if last_local_player_move_stone_value == self.get_selected_stone().get_value():
+                                return self.register_irregular_move()
+                            else:
+                                self.insert_stone(selected_position_index)
+                                self.remove_stone_from_user_inventory()
+                                # registrar posição envolvida na jogada local + continuação
+                        else:
+                            self.insert_stone(selected_position_index)
+                            self.remove_stone_from_user_inventory()
+                            # registrar posição envolvida na jogada local + continuação
+                    else:
+                        self.insert_stone(selected_position_index)
+                        self.remove_stone_from_user_inventory()
+                        # registrar posição envolvida na jogada local + continuação
+            else:
+                return self.register_irregular_move()
 
     def decide_move_type(self) -> MoveType:
         if self.selected_stone.get_color() != self.local_player.get_color():
@@ -106,13 +223,13 @@ class Board:
             return MoveType.INSERT
         return MoveType.ASK_AGAIN
 
-    def insert_stone(self, selected_triangle_index: int) -> None:
-        selected_triangle = self.triangles[selected_triangle_index]
+    def insert_stone(self, selected_position_index: int) -> None:
+        selected_triangle = self.triangles[selected_position_index]
         selected_triangle.insert_stone(self.selected_stone)
         self.selected_stone.set_on_board(True)
 
-    def remove_stone(self, selected_triangle_index: int) -> Stone:
-        selected_triangle = self.triangles[selected_triangle_index]
+    def remove_stone(self, selected_position_index: int) -> Stone:
+        selected_triangle = self.triangles[selected_position_index]
         removed_stone = selected_triangle.remove_stone()
         removed_stone.set_on_board(False)
         return removed_stone

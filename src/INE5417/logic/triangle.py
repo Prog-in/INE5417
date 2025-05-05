@@ -2,9 +2,10 @@ from .stone import Stone
 
 
 class Triangle:
-    def __init__(self):
+    def __init__(self, index: int) -> None:
         self.border_stone: Stone | None = None
         self.stone: Stone | None = None
+        self.index: int = index
 
     def reset(self):
         self.border_stone = None
@@ -12,6 +13,9 @@ class Triangle:
 
     def get_stone(self) -> Stone | None:
         return self.stone
+
+    def get_index(self) -> int:
+        return self.index
 
     def insert_stone(self, stone: Stone) -> None:
         self.stone = stone
