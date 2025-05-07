@@ -125,7 +125,7 @@ class GameInterface(AbstractHelperInterface):
         # TODO: implementar a lógica de atualização das bordas dos triângulos
         ...
 
-    def update_widgets(self, new_assets: dict[str, tk.PhotoImage]) -> None:
+    def update_widgets_images(self, new_assets: dict[str, tk.PhotoImage]) -> None:
         self.assets = new_assets
         for button_name, stone_button in self.stone_buttons.items():
             asset_name = button_name[:-2]

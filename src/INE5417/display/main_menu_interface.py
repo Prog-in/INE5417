@@ -49,7 +49,7 @@ class MainMenuInterface(AbstractHelperInterface):
     def start_match(self) -> None:
         self.player_interface.start_match()
 
-    def update_widgets(self, new_assets: dict[str, tk.PhotoImage]) -> None:
+    def update_widgets_images(self, new_assets: dict[str, tk.PhotoImage]) -> None:
         self.assets = new_assets
         self.menu_canvas.itemconfig("menu_image", image=self.assets["menu_image"])
         self.menu_canvas.itemconfig("menu_button", image=self.assets["menu_button"])
