@@ -42,7 +42,7 @@ class PlayerInterface(DogPlayerInterface):
 
         main_menu_frame = self.main_menu_interface.get_frame()
         self.set_main_frame(main_menu_frame)
-        self.map_main_frame()
+        self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
 
         # self.player_name: str = simpledialog.askstring(prompt="Nome do jogador")
         self.player_name: str = ""
@@ -188,9 +188,6 @@ class PlayerInterface(DogPlayerInterface):
     def set_main_frame(self, new_frame: ttk.Frame) -> None:
         self.main_frame = new_frame
 
-    def map_main_frame(self) -> None:
-        self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
-
     def get_theme(self) -> Theme:
         return self.theme
 
@@ -204,8 +201,8 @@ class PlayerInterface(DogPlayerInterface):
         else:
             self.set_theme(Theme.DEFAULT)
         self.assets = self.load_assets()
-        self.main_menu_interface.update_widgets(self.assets)
-        self.game_interface.update_widgets(self.assets)
+        self.main_menu_interface.update_widgets_images(self.assets)
+        self.game_interface.update_widgets_images(self.assets)
 
     def populate_window(self) -> None:
         menubar = self.menu.nametowidget(self.menu.winfo_parent())
@@ -216,10 +213,11 @@ class PlayerInterface(DogPlayerInterface):
         players = start_status.get_players()
         self.game_interface.start_match(players)
         game_frame = self.game_interface.get_frame()
-        if self.is_main_screen_filled():
+        is_main_screen_filled = self.is_main_screen_filled()
+        if is_main_screen_filled:
             self.main_frame.pack_forget()
         self.set_main_frame(game_frame)
-        self.map_main_frame()
+        self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
         self.update_gui()
         messagebox.showinfo(message="Partida iniciada!")
 
@@ -251,10 +249,11 @@ class PlayerInterface(DogPlayerInterface):
                     players = status.get_players()
                     self.game_interface.start_match(players)
                     game_frame = self.game_interface.get_frame()
-                    if self.is_main_screen_filled():
+                    is_main_screen_filled = self.is_main_screen_filled()
+                    if is_main_screen_filled:
                         self.main_frame.pack_forget()
                     self.set_main_frame(game_frame)
-                    self.map_main_frame()
+                    self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
                     self.update_gui()
                     messagebox.showinfo(message=message)
 
@@ -268,7 +267,7 @@ class PlayerInterface(DogPlayerInterface):
             if self.is_main_screen_filled():
                 self.main_frame.pack_forget()
             self.set_main_frame(main_menu_frame)
-            self.map_main_frame()
+            self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
 
     def send_move(self, move: dict[str, str]) -> None:
         self.dog.send_move(move)
