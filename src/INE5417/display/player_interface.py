@@ -213,7 +213,8 @@ class PlayerInterface(DogPlayerInterface):
         players = start_status.get_players()
         self.game_interface.start_match(players)
         game_frame = self.game_interface.get_frame()
-        if self.is_main_screen_filled():
+        is_main_screen_filled = self.is_main_screen_filled()
+        if is_main_screen_filled:
             self.main_frame.pack_forget()
         self.set_main_frame(game_frame)
         self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
