@@ -210,16 +210,20 @@ class PlayerInterface(DogPlayerInterface):
         self.message_label.pack(fill=tk.X, side=tk.BOTTOM, expand=False)
 
     def receive_start(self, start_status: StartStatus) -> None:
-        players = start_status.get_players()
-        self.game_interface.start_match(players)
-        game_frame = self.game_interface.get_frame()
-        is_main_screen_filled = self.is_main_screen_filled()
-        if is_main_screen_filled:
-            self.main_frame.pack_forget()
-        self.set_main_frame(game_frame)
-        self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
-        self.update_gui()
-        messagebox.showinfo(message="Partida iniciada!")
+        game_state = self.game_interface.get_game_state()
+        if game_state == GameState.TITLE:
+            players = start_status.get_players()
+            self.game_interface.start_match(players)
+            game_frame = self.game_interface.get_frame()
+            is_main_screen_filled = self.is_main_screen_filled()
+            if is_main_screen_filled:
+                self.main_frame.pack_forget()
+            self.set_main_frame(game_frame)
+            self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
+            self.update_gui()
+            messagebox.showinfo(message="Partida iniciada!")
+        else:
+            messagebox.showinfo(message="Ação não permitida.")
 
     def receive_move(self, a_move) -> None:
         print("received move:", a_move)
@@ -276,16 +280,16 @@ class PlayerInterface(DogPlayerInterface):
         self.game_interface.update_circle_visibility(index, state)
 
     def update_gui(self) -> None:
+        game_state = self.game_interface.get_game_state()
+
         # Atualizando o label de mensagens
         message = GAME_NAME + ": "
-        match self.game_interface.get_game_state():
+        match game_state:
             case GameState.TITLE:
                 message += 'Inicie a partida apertando o "Play"'
-            case GameState.PLAYER_MOVE_1:
-                message += "Selecione uma pedra"
-            case GameState.PLAYER_MOVE_2:
-                message += "Selecione um círculo"
-            case GameState.WAITING_OTHER_PLAYER:
+            case GameState.LOCAL_PLAYER_TO_MOVE:
+                message += "Selecione uma pedra ou círculo"
+            case GameState.REMOTE_PLAYER_TO_MOVE:
                 message += "Espere o outro jogador jogar"
             case GameState.MATCH_ENDED:
                 message += "Partida encerrada"
@@ -293,20 +297,18 @@ class PlayerInterface(DogPlayerInterface):
                 message += "Partida abandonada pelo outro jogador"
         self.message_label.configure(text=message)
         self.message_label.update()
+
         # atualizando os estados dos botões da barra de menu
-        game_state = self.game_interface.get_game_state()
         if (
-            game_state == GameState.MATCH_ENDED
-            or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
+                game_state == GameState.MATCH_ENDED
+                or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
             self.menu.entryconfigure(0, state=tk.NORMAL)
         else:
             self.menu.entryconfigure(0, state=tk.DISABLED)
-
         if (
-            game_state == GameState.PLAYER_MOVE_1
-            or game_state == GameState.PLAYER_MOVE_2
-            or game_state == GameState.WAITING_OTHER_PLAYER
+                game_state == GameState.LOCAL_PLAYER_TO_MOVE
+                or game_state == GameState.REMOTE_PLAYER_TO_MOVE
         ):
             self.menu.entryconfigure(1, state=tk.NORMAL)
         else:
