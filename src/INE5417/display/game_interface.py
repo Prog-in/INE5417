@@ -161,9 +161,8 @@ class GameInterface(AbstractHelperInterface):
 
     def stone_selected(self, color: str, stone_value: int, in_left: bool) -> None:
         game_state = self.get_game_state()
-        player_1_to_move = GameState.PLAYER_MOVE_1
-        player_2_to_move = GameState.PLAYER_MOVE_2
-        if game_state == player_1_to_move or game_state == player_2_to_move:
+        player_1_to_move = GameState.LOCAL_PLAYER_TO_MOVE
+        if game_state == player_1_to_move:
             self.board.stone_selected(color, stone_value, in_left)
 
     def position_selected(self, position_id: int) -> None:
