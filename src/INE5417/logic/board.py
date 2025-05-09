@@ -254,7 +254,7 @@ class Board:
         return move_to_send
 
     def receive_move(self, a_move):
-        if self.game_state == GameState.WAITING_OTHER_PLAYER:
+        if self.game_state == GameState.REMOTE_PLAYER_TO_MOVE:
             ...
 
     def receive_withdrawal_notification(self):
@@ -289,10 +289,10 @@ class Board:
             return False
 
     def set_local_player_starts(self) -> None:
-        self.game_state = GameState.PLAYER_MOVE_1
+        self.game_state = GameState.LOCAL_PLAYER_TO_MOVE
 
     def set_remote_player_starts(self) -> None:
-        self.game_state = GameState.WAITING_OTHER_PLAYER
+        self.game_state = GameState.REMOTE_PLAYER_TO_MOVE
 
     def start_match(self, players: list[list[str]]) -> None:
         local_player_order = int(players[0][2])
