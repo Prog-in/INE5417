@@ -19,7 +19,7 @@ class MainMenuInterface(AbstractHelperInterface):
         menu_canvas.tag_bind(
             menu_button,
             "<ButtonRelease-1>",
-            lambda event: self.player_interface.go_to_game_screen(),
+            lambda event: self.player_interface.start_match(),
         )
         menu_canvas.grid(row=0, column=0, sticky=tk.NSEW)
 

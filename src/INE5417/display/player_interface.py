@@ -1,11 +1,13 @@
 import tkinter as tk
-from tkinter import simpledialog
+from tkinter import simpledialog, messagebox
 from tkinter import ttk
 
 from PIL import ImageTk, Image
 
 from .game_interface import GameInterface
 from .main_menu_interface import MainMenuInterface
+from ..dog.dog_actor import DogActor
+from ..dog.dog_interface import DogPlayerInterface
 from ..utils.constants import (
     GAME_NAME,
     WINDOW_WIDTH,
@@ -20,7 +22,7 @@ from ..utils.constants import (
 )
 
 
-class PlayerInterface:
+class PlayerInterface(DogPlayerInterface):
     def __init__(self) -> None:
         super().__init__()
         self.root: tk.Tk = tk.Tk()
@@ -34,6 +36,9 @@ class PlayerInterface:
         self.menu_file: tk.Menu | None = None
         self.populate_window()
         self.player_name: str = self.get_player_name()
+        self.dog = DogActor()
+        message = self.dog.initialize(self.player_name, self)
+        messagebox.showinfo(message=message)
         self.root.mainloop()
 
     def get_player_name(self) -> str:
@@ -146,6 +151,15 @@ class PlayerInterface:
         print("Botão para ir ao menu principal pressionado")
         self.goto_main_menu()
 
-    def go_to_game_screen(self) -> None:
-        print("Botão para ir à tela de partida pressionado")
+    def start_match(self):
+        print("Botão para ir à tela de partida pressionado. Comunicando o DOG Server...")
+        start_status = self.dog.start_match(2)
+        message = start_status.get_message()
+        self.goto_game_screen()
+        messagebox.showinfo(message=message)
+
+    def receive_start(self, start_status):
+        print("Recebido início de partida do DOG Server...")
+        message = start_status.get_message()
+        messagebox.showinfo(message=message)
         self.goto_game_screen()
