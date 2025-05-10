@@ -8,11 +8,9 @@ from ..utils.move_type import MoveType
 
 class Board:
     def __init__(self) -> None:
-        # deve ser fixo pois, no caso de variável, deveria haver uma comunicação entre as instâncias do jogo
-        # para acertar qual cor cada jogador usaria.
         self.local_player: Player = Player()
         self.remote_player: Player = Player()
-        self.game_state: GameState = self.get_title_state()
+        self.game_state: GameState | None = None
         self.previous_move_info: None | tuple[MoveType, int, int] = None
         self.last_local_player_move_info: None | tuple[MoveType, int, int] = None
         self.selected_stone: Stone | None = None
@@ -21,15 +19,8 @@ class Board:
         for i in range(12):
             self.triangles.append(Triangle(i))
 
-    def get_title_state(self) -> GameState:
-        return GameState.TITLE
-
     def get_players_colors(self) -> tuple[str, str]:
         return self.local_player.get_color(), self.remote_player.get_color()
-
-    def reset_game(self):
-        self.local_player.reset()
-        self.remote_player.reset()
 
     def calculate_range(
         self, previous_move_stone_value: int, previous_move_position: int
@@ -88,7 +79,9 @@ class Board:
         #        yield t
 
     def generate_valid_move_list(self) -> list[Triangle]:
-        candidate_moves = self.calculate_range(self.last_move_info)
+        stone_value = self.last_move_info[0].get_value()
+        position_index = self.last_move_info[1].get_index()
+        candidate_moves = self.calculate_range(stone_value, position_index)
         valid_triangles = self.generate_valid_triangles(candidate_moves)
         return valid_triangles
 
@@ -96,7 +89,7 @@ class Board:
         self.last_move_info = (self.selected_stone, selected_triangle)
         self.selected_stone = None
 
-    def stone_selected(self, color: str, stone_value: int, in_left: bool) -> None:
+    def stone_selected(self, stone_value: int, in_left: bool) -> None:
         self.selected_stone = self.local_player.get_stone(stone_value, in_left)
 
     def there_was_a_previous_move(self) -> bool:
@@ -206,6 +199,7 @@ class Board:
                 is_first_local_player_move = self.get_is_first_local_player_move()
                 if is_first_local_player_move:
                     self.insert_stone(selected_position_index)
+                    self.local_player.remove_stone(self.selected_stone)
                     self.remove_stone_from_user_inventory()
                     # registrar posição envolvida na jogada local + continuação
                 else:
@@ -254,13 +248,11 @@ class Board:
         return MoveType.ASK_AGAIN
 
     def insert_stone(self, selected_position_index: int) -> None:
-        selected_triangle = self.triangles[selected_position_index]
-        selected_triangle.insert_stone(self.selected_stone)
+        self.triangles[selected_position_index].insert_stone(self.selected_stone)
         self.selected_stone.set_on_board(True)
 
     def remove_stone(self, selected_position_index: int) -> Stone:
-        selected_triangle = self.triangles[selected_position_index]
-        removed_stone = selected_triangle.remove_stone()
+        removed_stone = self.triangles[selected_position_index].remove_stone()
         removed_stone.set_on_board(False)
         return removed_stone
 
@@ -280,8 +272,15 @@ class Board:
             move_to_send["stone_value"] = str(removed_stone.get_value())
         return move_to_send
 
+    def get_received_move_type(self, a_move) -> MoveType:
+        return MoveType[a_move[0]]
+
+
     def receive_move(self, a_move):
-        if self.game_state == GameState.REMOTE_PLAYER_TO_MOVE:
+        received_move_type = self.get_received_move_type(a_move)
+        if received_move_type == MoveType.INSERT:
+            ...
+        else:
             ...
 
     def receive_withdrawal_notification(self):
@@ -292,8 +291,8 @@ class Board:
         self.selected_stone = None
 
     def remove_stones_from_triangles(self) -> None:
-        for triangle in self.triangles:
-            triangle.reset()
+        for i in range(12):
+            self.triangles[i].reset()
 
     def verify_if_local_player_starts(self, local_player_order: str) -> bool:
         if local_player_order == "1":

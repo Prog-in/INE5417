@@ -23,6 +23,7 @@ from ..utils.constants import (
     COLOR_B,
 )
 from ..utils.game_state import GameState
+from ..utils.move_type import MoveType
 from ..utils.theme import Theme
 
 
@@ -38,10 +39,9 @@ class PlayerInterface(DogPlayerInterface):
         )
         self.game_interface: GameInterface = GameInterface(self.root, self.assets, self)
 
-        self.populate_window()
+        self.main_menu_interface.initialize_frame()
 
-        # TODO: verificar a necessidade dessa ação
-        self.game_interface.get_game_state()
+        self.populate_window()
 
         main_menu_frame = self.main_menu_interface.get_frame()
         self.set_main_frame(main_menu_frame)
@@ -52,6 +52,7 @@ class PlayerInterface(DogPlayerInterface):
         self.dog: DogActor = DogActor()
         message = self.dog.initialize(self.player_name, self)
         messagebox.showinfo(message=message)
+        self.game_interface.set_game_state(GameState.MAIN_MENU)
         self.update_gui()
         self.root.mainloop()
 
@@ -239,9 +240,10 @@ class PlayerInterface(DogPlayerInterface):
 
     def receive_start(self, start_status: StartStatus) -> None:
         game_state = self.game_interface.get_game_state()
-        if game_state == GameState.TITLE:
+        if game_state == GameState.MAIN_MENU:
             players = start_status.get_players()
             self.game_interface.start_match(players)
+            self.game_interface.initialize_frame(COLOR_B, COLOR_A)
             game_frame = self.game_interface.get_frame()
             is_main_screen_filled = self.is_main_screen_filled()
             if is_main_screen_filled:
@@ -256,6 +258,9 @@ class PlayerInterface(DogPlayerInterface):
 
     def receive_move(self, a_move) -> None:
         print("received move:", a_move)
+        game_state = self.game_interface.get_game_state()
+        if game_state == GameState.REMOTE_PLAYER_TO_MOVE:
+            self.game_interface.receive_move(a_move)
         self.update_gui()
 
     def receive_withdrawal_notification(self) -> None:
@@ -271,10 +276,10 @@ class PlayerInterface(DogPlayerInterface):
             return False
 
     def start_match(self) -> None:
-        answer = messagebox.askyesno("START", "Deseja iniciar uma nova partida?")
-        if answer:
-            game_state = self.game_interface.get_game_state()
-            if game_state == GameState.TITLE:
+        game_state = self.game_interface.get_game_state()
+        if game_state == GameState.MAIN_MENU:
+            answer = messagebox.askyesno("START", "Deseja iniciar uma nova partida?")
+            if answer:
                 status: StartStatus = self.dog.start_match(2)
                 message: str = status.get_message()
                 code: str = status.get_code()
@@ -283,6 +288,8 @@ class PlayerInterface(DogPlayerInterface):
                 elif code == "2":
                     players = status.get_players()
                     self.game_interface.start_match(players)
+                    # TODO: verificar o que acontece ao iniciar uma segunda partida
+                    self.game_interface.initialize_frame(COLOR_A, COLOR_B)
                     game_frame = self.game_interface.get_frame()
                     is_main_screen_filled = self.is_main_screen_filled()
                     if is_main_screen_filled:
@@ -321,7 +328,7 @@ class PlayerInterface(DogPlayerInterface):
         # Atualizando o label de mensagens
         message = GAME_NAME + ": "
         match game_state:
-            case GameState.TITLE:
+            case GameState.MAIN_MENU:
                 message += 'Inicie a partida apertando o "Play"'
             case GameState.LOCAL_PLAYER_TO_MOVE:
                 message += "Selecione uma pedra ou círculo"
@@ -334,21 +341,31 @@ class PlayerInterface(DogPlayerInterface):
         self.message_label.configure(text=message)
         self.message_label.update()
 
+        print("update: game_state =", game_state)
         # atualizando os estados dos botões da barra de menu
         if (
             game_state == GameState.MATCH_ENDED
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
-            self.menu.entryconfigure(0, state=tk.NORMAL)
+            self.menu.entryconfigure(1, state=tk.NORMAL)
         else:
-            self.menu.entryconfigure(0, state=tk.DISABLED)
+            self.menu.entryconfigure(1, state=tk.DISABLED)
+
         if (
             game_state == GameState.LOCAL_PLAYER_TO_MOVE
             or game_state == GameState.REMOTE_PLAYER_TO_MOVE
         ):
-            self.menu.entryconfigure(1, state=tk.NORMAL)
+            self.menu.entryconfigure(2, state=tk.NORMAL)
         else:
-            self.menu.entryconfigure(1, state=tk.DISABLED)
+            self.menu.entryconfigure(2, state=tk.DISABLED)
+
+        if (
+                game_state == GameState.MATCH_ENDED
+                or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
+        ):
+            self.menu.entryconfigure(4, state=tk.NORMAL)
+        else:
+            self.menu.entryconfigure(4, state=tk.DISABLED)
         self.menu.update()
 
     def exit_game(self) -> None:
