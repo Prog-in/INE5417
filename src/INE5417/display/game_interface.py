@@ -1,21 +1,26 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from .abstract_helper_interface import AbstractHelperInterface
-from ..utils.constants import BOARD_WIDTH, BOARD_HEIGHT
 from ..logic.board import Board
+from ..utils.constants import BOARD_WIDTH, BOARD_HEIGHT
 from ..utils.game_state import GameState
 from ..utils.move_type import MoveType
 
 
-class GameInterface(AbstractHelperInterface):
+class GameInterface:
     def __init__(
         self, root: tk.Tk, assets: dict[str, tk.PhotoImage], player_interface
     ) -> None:
         self.board: Board = Board()
         self.canvas_board: tk.Canvas | None = None
         self.stone_buttons: dict[str, tk.Button] = dict()
-        super().__init__(root, assets, player_interface)
+        self.root: tk.Tk = root
+        self.assets: dict[str, tk.PhotoImage] = assets
+        self.player_interface = player_interface
+        self.frame: ttk.Frame | None = None
+
+    def get_frame(self) -> ttk.Frame:
+        return self.frame
 
     def get_game_state(self) -> GameState:
         return self.board.get_game_state()
@@ -34,14 +39,14 @@ class GameInterface(AbstractHelperInterface):
             button_stone_1 = ttk.Button(
                 player_stones_frame,
                 image=self.assets[f"{player_color}{i}"],
-                command=lambda index=i: self.stone_selected(player_color, index, True),
+                command=lambda index=i: self.stone_selected(index, True) if is_local else "",
                 state=tk.NORMAL if is_local else tk.DISABLED,
                 style="flat.TButton",
             )
             button_stone_2 = ttk.Button(
                 player_stones_frame,
                 image=self.assets[f"{player_color}{i}"],
-                command=lambda index=i: self.stone_selected(player_color, index, False),
+                command=lambda index=i: self.stone_selected(index, False) if is_local else "",
                 state=tk.NORMAL if is_local else tk.DISABLED,
                 style="flat.TButton",
             )
@@ -52,11 +57,11 @@ class GameInterface(AbstractHelperInterface):
 
         return player_stones_frame
 
-    def initialize_frame(self) -> ttk.Frame:
-        game_frame = ttk.Frame(self.root)
+    def initialize_frame(self, local_player_color: str, remote_player_color: str) -> None:
+        self.frame = ttk.Frame(self.root)
 
         self.canvas_board = tk.Canvas(
-            game_frame, width=BOARD_WIDTH, height=BOARD_HEIGHT
+            self.frame, width=BOARD_WIDTH, height=BOARD_HEIGHT
         )
         self.canvas_board.create_image(
             BOARD_WIDTH // 2,
@@ -89,25 +94,22 @@ class GameInterface(AbstractHelperInterface):
                 lambda event, index=i: self.position_selected(index),
             )
 
-        local_player_color, remote_player_color = self.board.get_players_colors()
         local_player_stones_frame = self.initialize_player_stone_frame(
-            local_player_color, game_frame, True, "Peças do jogador local"
+            local_player_color, self.frame, True, "Peças do jogador local"
         )
         remote_player_stones_frame = self.initialize_player_stone_frame(
-            remote_player_color, game_frame, False, "Peças do jogador remoto"
+            remote_player_color, self.frame, False, "Peças do jogador remoto"
         )
 
         local_player_stones_frame.grid(row=0, column=0)
         self.canvas_board.grid(row=0, column=1, sticky=tk.NS)
         remote_player_stones_frame.grid(row=0, column=2)
 
-        return game_frame
-
     def start_match(self, players: list[list[str]]) -> None:
         self.board.start_match(players)
 
-    def reset_game(self):
-        self.board.reset_game()
+    def receive_move(self, a_move) -> None:
+        self.board.receive_move(a_move)
 
     def update_board(self, updated_board_frame: ttk.Frame) -> None:
         ...
@@ -162,10 +164,10 @@ class GameInterface(AbstractHelperInterface):
             f"circle{index}", image=self.assets[f"{asset_name}"]
         )
 
-    def stone_selected(self, color: str, stone_value: int, in_left: bool) -> None:
+    def stone_selected(self, stone_value: int, in_left: bool) -> None:
         game_state = self.get_game_state()
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
-            self.board.stone_selected(color, stone_value, in_left)
+            self.board.stone_selected(stone_value, in_left)
 
     def position_selected(self, position_id: int) -> None:
         game_state = self.get_game_state()

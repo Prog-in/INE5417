@@ -1,19 +1,24 @@
 import tkinter as tk
 from tkinter import ttk
 
-from .abstract_helper_interface import AbstractHelperInterface
 from ..utils.constants import WINDOW_WIDTH, WINDOW_HEIGHT
 
 
-class MainMenuInterface(AbstractHelperInterface):
+class MainMenuInterface:
     def __init__(
         self, root: tk.Tk, assets: dict[str, tk.PhotoImage], player_interface
     ) -> None:
         self.menu_canvas: tk.Canvas | None = None
-        super().__init__(root, assets, player_interface)
+        self.root: tk.Tk = root
+        self.assets: dict[str, tk.PhotoImage] = assets
+        self.player_interface = player_interface
+        self.frame: ttk.Frame | None = None
 
-    def initialize_frame(self) -> ttk.Frame:
-        menu_frame = ttk.Frame(self.root)
+    def get_frame(self) -> ttk.Frame:
+        return self.frame
+
+    def initialize_frame(self) -> None:
+        self.frame = ttk.Frame(self.root)
 
         # TODO: adicionar a logo no menu
         # logo_frame = ttk.Frame(self.root)
@@ -24,7 +29,7 @@ class MainMenuInterface(AbstractHelperInterface):
         # ttk.Label(self.logo_frame, image=self.logo).grid(row=0, column=0)
 
         self.menu_canvas = tk.Canvas(
-            menu_frame, width=WINDOW_WIDTH, height=WINDOW_HEIGHT
+            self.frame, width=WINDOW_WIDTH, height=WINDOW_HEIGHT
         )
         self.menu_canvas.create_image(
             WINDOW_WIDTH // 2,
@@ -44,7 +49,6 @@ class MainMenuInterface(AbstractHelperInterface):
             lambda event: self.start_match(),
         )
         self.menu_canvas.grid(row=0, column=0, sticky=tk.NSEW)
-        return menu_frame
 
     def start_match(self) -> None:
         self.player_interface.start_match()
