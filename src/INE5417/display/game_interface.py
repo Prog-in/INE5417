@@ -172,8 +172,9 @@ class GameInterface:
     def position_selected(self, position_id: int) -> None:
         game_state = self.get_game_state()
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
-            move_type = self.board.position_selected(position_id)
-            if move_type == MoveType.ASK_AGAIN:
+            self.board.position_selected(position_id)
+            is_legal_move = self.board.get_is_legal_move()
+            if is_legal_move:
                 messagebox.showinfo(message="Jogada inválida. Tente novamente")
             else:
                 move_to_send = self.board.get_move_to_send()
