@@ -23,7 +23,6 @@ from ..utils.constants import (
     COLOR_B,
 )
 from ..utils.game_state import GameState
-from ..utils.move_type import MoveType
 from ..utils.theme import Theme
 
 
@@ -261,7 +260,7 @@ class PlayerInterface(DogPlayerInterface):
         game_state = self.game_interface.get_game_state()
         if game_state == GameState.REMOTE_PLAYER_TO_MOVE:
             self.game_interface.receive_move(a_move)
-        self.update_board()
+        self.update_board(a_move, False)
         self.update_gui()
 
     def receive_withdrawal_notification(self) -> None:
@@ -270,8 +269,8 @@ class PlayerInterface(DogPlayerInterface):
             self.game_interface.set_game_state(GameState.ABANDONED_BY_OTHER_PLAYER)
             self.update_gui()
 
-    def update_board(self) -> None:
-        ...
+    def update_board(self, move: dict[str, str], is_local_move: bool) -> None:
+        self.game_interface.update_board(move, is_local_move)
 
     def is_main_screen_filled(self) -> bool:
         if self.main_frame is not None:
