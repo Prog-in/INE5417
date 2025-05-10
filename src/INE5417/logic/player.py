@@ -66,20 +66,14 @@ class Player:
             return -1
 
     def get_stone(self, value: int, in_left: bool) -> Stone:
-        stones_with_selected_stone_value = self.get_stones_with_selected_stone_value(value)
         stone_index = self.get_stone_index(in_left)
-        return stones_with_selected_stone_value[stone_index]
-
-    def get_stones_with_selected_stone_value(self, selected_stone_value: int) -> list[Stone]:
-        return self.stones[selected_stone_value]
+        return self.stones[value][stone_index]
 
     def insert_stone(self, stone: Stone, in_left: bool) -> None:
         selected_stone_value = stone.get_value()
-        stones_with_selected_stone_value = self.get_stones_with_selected_stone_value(selected_stone_value)
         stone_index = self.get_stone_index(in_left)
-        stones_with_selected_stone_value.insert(stone_index, stone)
+        self.stones[selected_stone_value].insert(stone_index, stone)
 
     def remove_stone(self, selected_stone: Stone) -> None:
         selected_stone_value = selected_stone.get_value()
-        stones_with_selected_stone_value = self.get_stones_with_selected_stone_value(selected_stone_value)
-        stones_with_selected_stone_value.remove(selected_stone)
+        self.stones[selected_stone_value].remove(selected_stone)
