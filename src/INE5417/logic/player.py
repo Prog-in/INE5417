@@ -5,6 +5,7 @@ from ..utils.constants import COLOR_A, COLOR_B
 class Player:
     def __init__(self) -> None:
         self.id: str = ""
+        self.name: str = ""
         self.turn: bool = False
         self.winner: bool = False
         self.color: str | None = None
@@ -18,26 +19,33 @@ class Player:
 
     def reset(self) -> None:
         self.id: str = ""
+        self.name: str = ""
         self.turn: bool = False
         self.winner: bool = False
+        self.stones = []
+        for i in range(6):
+            same_value_stones = []
+            for j in range(2):
+                same_value_stones.append(Stone(i))
+                same_value_stones.append(Stone(i))
+            self.stones.append(same_value_stones)
 
-    def update(self, player_id: str, player_order: int) -> None:
-        if player_order == 1:
-            self.color = COLOR_A
-            self.turn = True
-        else:  # player_order == 2
-            self.color = COLOR_B
+    def update(self, player_name: str, player_id: str) -> None:
         for i in range(6):
             for j in range(2):
                 stone = self.stones[i][j]
                 stone.update(self.color)
         self.id = player_id
+        self.name = player_name
 
     def toggle_turn(self) -> None:
         self.turn = not self.turn
 
     def get_id(self) -> str:
         return self.id
+
+    def set_color(self, new_color: str) -> None:
+        self.color = new_color
 
     def get_color(self) -> str:
         return self.color
