@@ -111,19 +111,6 @@ class GameInterface:
     def receive_move(self, a_move) -> None:
         self.board.receive_move(a_move)
 
-    def update_board(self, updated_board_frame: ttk.Frame) -> None:
-        ...
-        # for i, triangle in enumerate(board):
-        #     positioned_stone = triangle[0]
-        #     asset_name = f"circle"
-        #     if positioned_stone is not None:
-        #         stone_value, stone_color = positioned_stone
-        #         asset_name = f"{stone_color}{stone_value}"
-        #     self.update_circle_image(i, asset_name)
-        #
-        #     border_stone = triangle[1]
-        #     self.update_triangle_border(i, border_stone)
-
     def update_triangle_border(
         self, index: int, border_stone: tuple[str, str] | None
     ) -> None:
@@ -172,8 +159,9 @@ class GameInterface:
     def position_selected(self, position_id: int) -> None:
         game_state = self.get_game_state()
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
-            move_type = self.board.position_selected(position_id)
-            if move_type == MoveType.ASK_AGAIN:
+            self.board.position_selected(position_id)
+            is_legal_move = self.board.get_is_legal_move()
+            if is_legal_move:
                 messagebox.showinfo(message="Jogada inválida. Tente novamente")
             else:
                 move_to_send = self.board.get_move_to_send()
