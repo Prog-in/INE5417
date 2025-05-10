@@ -261,6 +261,7 @@ class PlayerInterface(DogPlayerInterface):
         game_state = self.game_interface.get_game_state()
         if game_state == GameState.REMOTE_PLAYER_TO_MOVE:
             self.game_interface.receive_move(a_move)
+        self.update_board()
         self.update_gui()
 
     def receive_withdrawal_notification(self) -> None:
@@ -268,6 +269,9 @@ class PlayerInterface(DogPlayerInterface):
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE or GameState.REMOTE_PLAYER_TO_MOVE:
             self.game_interface.set_game_state(GameState.ABANDONED_BY_OTHER_PLAYER)
             self.update_gui()
+
+    def update_board(self) -> None:
+        ...
 
     def is_main_screen_filled(self) -> bool:
         if self.main_frame is not None:
@@ -305,7 +309,7 @@ class PlayerInterface(DogPlayerInterface):
     def go_to_main_menu(self):
         game_state = self.game_interface.get_game_state()
         if (
-            game_state == GameState.MATCH_ENDED
+            game_state == GameState.GAME_OVER
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
             main_menu_frame = self.main_menu_interface.get_frame()
@@ -335,7 +339,7 @@ class PlayerInterface(DogPlayerInterface):
                 message += "Selecione uma pedra ou círculo"
             case GameState.REMOTE_PLAYER_TO_MOVE:
                 message += "Espere o outro jogador jogar"
-            case GameState.MATCH_ENDED:
+            case GameState.GAME_OVER:
                 message += "Partida encerrada"
             case GameState.ABANDONED_BY_OTHER_PLAYER:
                 message += "Partida abandonada pelo outro jogador"
@@ -345,7 +349,7 @@ class PlayerInterface(DogPlayerInterface):
         print("update: game_state =", game_state)
         # atualizando os estados dos botões da barra de menu
         if (
-            game_state == GameState.MATCH_ENDED
+            game_state == GameState.GAME_OVER
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
             self.menu.entryconfigure(1, state=tk.NORMAL)
@@ -361,7 +365,7 @@ class PlayerInterface(DogPlayerInterface):
             self.menu.entryconfigure(2, state=tk.DISABLED)
 
         if (
-                game_state == GameState.MATCH_ENDED
+                game_state == GameState.GAME_OVER
                 or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
             self.menu.entryconfigure(4, state=tk.NORMAL)
