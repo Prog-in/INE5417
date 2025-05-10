@@ -265,7 +265,7 @@ class PlayerInterface(DogPlayerInterface):
 
     def receive_withdrawal_notification(self) -> None:
         game_state = self.game_interface.get_game_state()
-        if game_state == GameState.REMOTE_PLAYER_TO_MOVE:
+        if game_state == GameState.LOCAL_PLAYER_TO_MOVE or GameState.REMOTE_PLAYER_TO_MOVE:
             self.game_interface.set_game_state(GameState.ABANDONED_BY_OTHER_PLAYER)
             self.update_gui()
 
@@ -309,7 +309,8 @@ class PlayerInterface(DogPlayerInterface):
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
         ):
             main_menu_frame = self.main_menu_interface.get_frame()
-            if self.is_main_screen_filled():
+            is_main_screen_filled = self.is_main_screen_filled()
+            if is_main_screen_filled:
                 self.main_frame.pack_forget()
             self.set_main_frame(main_menu_frame)
             self.main_frame.pack(
