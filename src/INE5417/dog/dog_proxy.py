@@ -65,8 +65,6 @@ class DogProxy:
             "game_id": a_game_id,
         }
         resp = requests.post(url, data=post_data)
-        # mantido por enquanto pois às vezes o dog falha ao se conectar ao servidor, o que pode ser visto em resp.text
-        print("player registered", resp.text)
         return resp
 
     def start_match(self, number_of_players):
