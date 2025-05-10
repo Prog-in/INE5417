@@ -17,7 +17,7 @@ class AbstractHelperInterface(ABC):
         pass
 
     @abstractmethod
-    def update_widgets(self, new_assets: dict[str, tk.PhotoImage]) -> None:
+    def update_widgets_images(self, new_assets: dict[str, tk.PhotoImage]) -> None:
         pass
 
     def get_frame(self) -> ttk.Frame:

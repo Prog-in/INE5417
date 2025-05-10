@@ -20,6 +20,9 @@ class GameInterface(AbstractHelperInterface):
     def get_game_state(self) -> GameState:
         return self.board.get_game_state()
 
+    def set_game_state(self, new_game_state: GameState) -> None:
+        self.board.set_game_state(new_game_state)
+
     def initialize_player_stone_frame(
         self, player_color: str, parent_widget: tk.Widget, is_local: bool, text: str
     ) -> ttk.Frame:
