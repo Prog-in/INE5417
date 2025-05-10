@@ -40,6 +40,9 @@ class PlayerInterface(DogPlayerInterface):
 
         self.populate_window()
 
+        # TODO: verificar a necessidade dessa ação
+        self.game_interface.get_game_state()
+
         main_menu_frame = self.main_menu_interface.get_frame()
         self.set_main_frame(main_menu_frame)
         self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
@@ -49,6 +52,7 @@ class PlayerInterface(DogPlayerInterface):
         self.dog: DogActor = DogActor()
         message = self.dog.initialize(self.player_name, self)
         messagebox.showinfo(message=message)
+        self.update_gui()
         self.root.mainloop()
 
     def initialize_gui_elements(self) -> None:
@@ -255,8 +259,10 @@ class PlayerInterface(DogPlayerInterface):
         self.update_gui()
 
     def receive_withdrawal_notification(self) -> None:
-        print("received withdrawal notification")
-        self.update_gui()
+        game_state = self.game_interface.get_game_state()
+        if game_state == GameState.REMOTE_PLAYER_TO_MOVE:
+            self.game_interface.set_game_state(GameState.ABANDONED_BY_OTHER_PLAYER)
+            self.update_gui()
 
     def is_main_screen_filled(self) -> bool:
         if self.main_frame is not None:
