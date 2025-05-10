@@ -20,6 +20,9 @@ class GameInterface(AbstractHelperInterface):
     def get_game_state(self) -> GameState:
         return self.board.get_game_state()
 
+    def set_game_state(self, new_game_state: GameState) -> None:
+        self.board.set_game_state(new_game_state)
+
     def initialize_player_stone_frame(
         self, player_color: str, parent_widget: tk.Widget, is_local: bool, text: str
     ) -> ttk.Frame:
@@ -161,17 +164,18 @@ class GameInterface(AbstractHelperInterface):
 
     def stone_selected(self, color: str, stone_value: int, in_left: bool) -> None:
         game_state = self.get_game_state()
-        player_1_to_move = GameState.LOCAL_PLAYER_TO_MOVE
-        if game_state == player_1_to_move:
+        if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
             self.board.stone_selected(color, stone_value, in_left)
 
     def position_selected(self, position_id: int) -> None:
-        move_type = self.board.position_selected(position_id)
-        if move_type == MoveType.ASK_AGAIN:
-            messagebox.showinfo(message="Jogada inválida. Tente novamente")
-        else:
-            move_to_send = self.board.get_move_to_send()
-            self.update_stone_state(
-                move_to_send["stone_color"], int(move_to_send["stone_value"]), tk.HIDDEN
-            )
-            self.player_interface.send_move(move_to_send)
+        game_state = self.get_game_state()
+        if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
+            move_type = self.board.position_selected(position_id)
+            if move_type == MoveType.ASK_AGAIN:
+                messagebox.showinfo(message="Jogada inválida. Tente novamente")
+            else:
+                move_to_send = self.board.get_move_to_send()
+                self.update_stone_state(
+                    move_to_send["stone_color"], int(move_to_send["stone_value"]), tk.HIDDEN
+                )
+                self.player_interface.send_move(move_to_send)
