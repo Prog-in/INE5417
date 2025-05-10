@@ -222,8 +222,6 @@ class PlayerInterface(DogPlayerInterface):
             self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
             self.update_gui()
             messagebox.showinfo(message="Partida iniciada!")
-        else:
-            messagebox.showinfo(message="Ação não permitida.")
 
     def receive_move(self, a_move) -> None:
         print("received move:", a_move)
@@ -245,8 +243,8 @@ class PlayerInterface(DogPlayerInterface):
             game_state = self.game_interface.get_game_state()
             if game_state == GameState.TITLE:
                 status: StartStatus = self.dog.start_match(2)
-                code: str = status.get_code()
                 message: str = status.get_message()
+                code: str = status.get_code()
                 if code == "0" or code == "1":
                     messagebox.showinfo(message=message)
                 elif code == "2":
@@ -258,7 +256,7 @@ class PlayerInterface(DogPlayerInterface):
                         self.main_frame.pack_forget()
                     self.set_main_frame(game_frame)
                     self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
-                    self.update_gui()
+                    self.game_interface.set_game_state(GameState.LOCAL_PLAYER_TO_MOVE)
                     messagebox.showinfo(message=message)
 
     def go_to_main_menu(self):
