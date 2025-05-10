@@ -261,7 +261,7 @@ class PlayerInterface(DogPlayerInterface):
         game_state = self.game_interface.get_game_state()
         if game_state == GameState.REMOTE_PLAYER_TO_MOVE:
             self.game_interface.receive_move(a_move)
-        self.update_board()
+        self.update_board(a_move)
         self.update_gui()
 
     def receive_withdrawal_notification(self) -> None:
@@ -270,8 +270,10 @@ class PlayerInterface(DogPlayerInterface):
             self.game_interface.set_game_state(GameState.ABANDONED_BY_OTHER_PLAYER)
             self.update_gui()
 
-    def update_board(self) -> None:
-        ...
+    def update_board(self, move: dict[str, str]) -> None:
+        self.game_interface.update_stone_state(
+            move["stone_color"], int(move["stone_value"]), bool(move["in_left"]), tk.HIDDEN
+        )
 
     def is_main_screen_filled(self) -> bool:
         if self.main_frame is not None:

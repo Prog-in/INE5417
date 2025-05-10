@@ -127,16 +127,31 @@ class GameInterface:
             self.canvas_board.itemconfig("circle" + str(i), image=self.assets["circle"])
         self.canvas_board.itemconfig("board", image=self.assets["board"])
 
+    def get_leftmost_stone_button(self, stone_color: str, stone_value: int) -> ttk.Button:
+        return self.stone_buttons[stone_color + str(stone_value) + ".1"]
+
+    def get_rightmost_stone_button(self, stone_color: str, stone_value: int) -> ttk.Button:
+        return self.stone_buttons[stone_color + str(stone_value) + ".2"]
+
     def update_stone_state(
-        self, stone_color: str, stone_value: int, state: str
+        self, stone_color: str, stone_value: int, in_left: bool, state: str
     ) -> None:
-        stone_button = self.stone_buttons[stone_color + str(stone_value) + ".2"]
-        if stone_button.cget("state") != state:
-            stone_button.configure(state=state)
+        if in_left:
+            stone_button = self.get_leftmost_stone_button(stone_color, stone_value)
+            if stone_button.cget("state") != state:
+                stone_button.configure(state=state)
+            else:
+                stone_button = self.get_rightmost_stone_button(stone_color, stone_value)
+                stone_button.configure(state=state)
+            stone_button.update()
         else:
-            stone_button = self.stone_buttons[stone_color + str(stone_value) + ".1"]
-            stone_button.configure(state=state)
-        stone_button.update()
+            stone_button = self.get_rightmost_stone_button(stone_color, stone_value)
+            if stone_button.cget("state") != state:
+                stone_button.configure(state=state)
+            else:
+                stone_button = self.get_leftmost_stone_button(stone_color, stone_value)
+                stone_button.configure(state=state)
+            stone_button.update()
 
     def update_stones_state(self, state: str):
         for button in self.stone_buttons.values():
@@ -165,7 +180,5 @@ class GameInterface:
                 messagebox.showinfo(message="Jogada inválida. Tente novamente")
             else:
                 move_to_send = self.board.get_move_to_send()
-                self.update_stone_state(
-                    move_to_send["stone_color"], int(move_to_send["stone_value"]), tk.HIDDEN
-                )
                 self.player_interface.send_move(move_to_send)
+                self.player_interface.update_board(move_to_send)
