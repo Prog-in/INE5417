@@ -319,11 +319,9 @@ class Board:
 
     def insert_stone(self, stone: Stone, selected_position_index: int) -> None:
         self.triangles[selected_position_index].insert_stone(stone)
-        self.selected_stone.set_on_board(True)
 
     def remove_stone(self, selected_position_index: int) -> Stone:
         removed_stone = self.triangles[selected_position_index].remove_stone()
-        removed_stone.set_on_board(False)
         return removed_stone
 
     def register_in_border(self, selected_position_index: int) -> None:
@@ -333,8 +331,8 @@ class Board:
     def get_received_move_type(self, a_move: dict[str, str]) -> MoveType:
         return MoveType[a_move["move_type"]]
 
-    def verify_if_is_game_over(self, game_over: str) -> bool:
-        return bool(game_over)
+    def verify_if_is_game_over(self, a_move: dict[str, str]) -> bool:
+        return bool(a_move["game_over"])
 
     def receive_move(self, a_move: dict[str, str]) -> None:
         received_move_type = self.get_received_move_type(a_move)
@@ -345,7 +343,7 @@ class Board:
         else:
             stone = self.remove_stone(int(a_move["triangle_index"]))
             self.local_player.insert_stone(stone, bool(a_move["in_left"]))
-        is_game_over = self.verify_if_is_game_over(a_move["game_over"])
+        is_game_over = self.verify_if_is_game_over(a_move)
         if is_game_over:
             self.remote_player.set_winner()
             self.set_game_state(GameState.GAME_OVER)
