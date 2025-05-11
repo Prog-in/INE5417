@@ -128,7 +128,7 @@ class GameInterface:
     def start_match(self, players: list[list[str]]) -> None:
         self.board.start_match(players)
 
-    def receive_move(self, a_move) -> None:
+    def receive_move(self, a_move: dict[str, str]) -> None:
         self.board.receive_move(a_move)
 
     def update_widgets_images(self, new_assets: dict[str, tk.PhotoImage]) -> None:
@@ -178,11 +178,6 @@ class GameInterface:
     def update_circle_visibility(self, index: int, state: str) -> None:
         self.canvas_board.itemconfig(f"circle{index}", state=state)
 
-    def update_circle_image(self, index: int, asset_name: str) -> None:
-        self.canvas_board.itemconfig(
-            f"circle{index}", image=self.assets[f"{asset_name}"]
-        )
-
     def stone_selected(self, stone_value: int, in_left: bool) -> None:
         game_state = self.get_game_state()
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
@@ -215,20 +210,13 @@ class GameInterface:
     def identify_in_left_from_move(self, move: dict[str, str]) -> bool:
         return bool(move["in_left"])
 
-    def clear_border_at_position(self, position: int) -> None:
-        self.canvas_board.itemconfig(f"circle{position}", state=tk.HIDDEN)
-
-    def identify_stone_color(self, is_local_move: bool) -> str:
-        if is_local_move:
-            color = self.board.get_local_player_color()
-        else:
-            color = self.board.get_remote_player_color()
-        return color
-
     def update_board(self, move: dict[str, str], is_local_move: bool) -> None:
         stone_value = self.identify_stone_value_from_move(move)
+        if is_local_move:
+            stone_color = self.board.get_local_player_color()
+        else:
+            stone_color = self.board.get_remote_player_color()
         position = self.identify_position_from_move(move)
-        stone_color = self.identify_stone_color(is_local_move)
 
         is_local_player_stone_in_border = self.board.is_local_player_stone_in_border()
         if is_local_player_stone_in_border:
@@ -236,17 +224,20 @@ class GameInterface:
             local_player_stone_in_border_color = local_player_stone_in_border.get_color()
             local_player_stone_in_border_value = local_player_stone_in_border.get_value()
             local_player_stone_in_border_position = self.board.get_local_player_stone_in_border_position()
-            self.clear_border_at_position(local_player_stone_in_border_position)
-            self.update_stone_state(local_player_stone_in_border_color, local_player_stone_in_border_value, True, tk.NORMAL)
+            self.canvas_board.itemconfig(f"circle{local_player_stone_in_border_position}", state=tk.HIDDEN)
+            border_stone_button = self.identify_stone_button(local_player_stone_in_border_color, local_player_stone_in_border_value, True, tk.HIDDEN)
+            border_stone_button.configure(state=tk.NORMAL)
+            border_stone_button.update()
             self.board.set_border_stone_info(None)
 
         move_type = self.get_move_type_from_move(move)
-        in_left = self.identify_in_left_from_move(move)
-
         if move_type == MoveType.INSERT:
-            self.update_stone_state(
-                stone_color, stone_value, in_left, tk.HIDDEN
-            )
-            self.update_circle_image(position, stone_color + str(stone_value))
+            in_left = self.identify_in_left_from_move(move)
+            selected_stone_button = self.identify_stone_button(stone_color, stone_value, in_left, tk.NORMAL)
+            selected_stone_button.configure(state=tk.HIDDEN)
+            selected_stone_button.update()
+            self.canvas_board.itemconfig(f"circle{position}", image=self.assets[stone_color + str(stone_value)])
         else:
-            self.update_circle_image(position, "circle")
+            self.canvas_board.itemconfig(f"circle{position}", image=self.assets["circle"])
+            self.canvas_board.itemconfig(f"border{position}", image=self.assets[stone_color + str(stone_value)])
+
