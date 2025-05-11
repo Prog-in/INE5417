@@ -226,24 +226,20 @@ class Board:
                             is_first_local_player_move = self.is_first_local_player_move()
                             if not is_first_local_player_move:
                                 last_local_player_move_type = self.get_last_local_player_move_type()
-                                if not last_local_player_move_type == MoveType.REMOVE:
+                                if last_local_player_move_type == MoveType.REMOVE:
                                     last_local_player_move_position = self.get_last_local_player_move_position()
                                     if last_local_player_move_position == selected_position_index:
                                         last_local_player_move_stone_value = self.get_last_local_player_move_stone_value()
                                         if last_local_player_move_stone_value == selected_position_index:
-                                            self.set_is_legal_move(False)
                                             return
                             selected_stone_value = self.selected_stone.get_value()
                             self.register_stone_value_involved(selected_stone_value)
                             self.register_move_type_involved(MoveType.INSERT)
                             self.insert_stone(self.selected_stone, selected_position_index)
                             self.local_player.remove_stone(self.selected_stone)
-                            # igual a partir daqui
                         else:
-                            self.set_is_legal_move(False)
                             return
                     else:
-                        self.set_is_legal_move(False)
                         return
                 else:
                     legal_positions = self.calculate_range_removed_old_stone(previous_move_position)
@@ -255,9 +251,7 @@ class Board:
                         self.register_move_type_involved(MoveType.REMOVE)
                         self.register_in_border(selected_position_index)
                         self.remove_stone(selected_position_index)
-                        # igual a partir daqui
                     else:
-                        self.set_is_legal_move(False)
                         return
             else:
                 legal_positions = self.calculate_range(previous_move_position, previous_move_stone_value)
@@ -275,14 +269,12 @@ class Board:
                                 if last_local_player_move_position == selected_position_index:
                                     last_local_player_move_stone_value = self.get_last_local_player_move_stone_value()
                                     if last_local_player_move_stone_value == selected_position_index:
-                                        self.set_is_legal_move(False)
                                         return
                             selected_stone_value = self.selected_stone.get_value()
                             self.register_stone_value_involved(selected_stone_value)
                             self.register_move_type_involved(MoveType.INSERT)
                             self.insert_stone(self.selected_stone, selected_position_index)
                             self.local_player.remove_stone(self.selected_stone)
-                            # igual a partir daqui
                         else:
                             stone_in_selected_position = self.triangles[selected_position_index].get_stone()
                             stone_in_selected_position_value = stone_in_selected_position.get_value()
@@ -290,12 +282,9 @@ class Board:
                             self.register_move_type_involved(MoveType.REMOVE)
                             self.register_in_border(selected_position_index)
                             self.remove_stone(selected_position_index)
-                            # igual a partir daqui
                     else:
-                        self.set_is_legal_move(False)
                         return
                 else:
-                    self.set_is_legal_move(False)
                     return
         else:
             user_already_selected_a_stone = self.user_already_selected_a_stone()
@@ -308,21 +297,25 @@ class Board:
                         if last_local_player_move_position == selected_position_index:
                             last_local_player_move_stone_value = self.get_last_local_player_move_stone_value()
                             if last_local_player_move_stone_value == selected_position_index:
-                                self.set_is_legal_move(False)
                                 return
                 selected_stone_value = self.selected_stone.get_value()
                 self.register_stone_value_involved(selected_stone_value)
                 self.register_move_type_involved(MoveType.INSERT)
                 self.insert_stone(self.selected_stone, selected_position_index)
                 self.local_player.remove_stone(self.selected_stone)
-                # igual a partir daqui
             else:
-                self.set_is_legal_move(False)
                 return
-        self.set_is_legal_move(True)
+
         self.register_position_involved(selected_position_index)
         self.local_player.toggle_turn()
-
+        valid_opponent_moves = self.calculate_valid_opponent_moves()
+        there_are_valid_opponent_moves = self.there_are_valid_opponent_moves(valid_opponent_moves)
+        if not there_are_valid_opponent_moves:
+            self.local_player.set_winner()
+            self.set_game_state(GameState.GAME_OVER)
+        else:
+            self.remote_player.toggle_turn()
+            self.set_game_state(GameState.REMOTE_PLAYER_TO_MOVE)
 
     def insert_stone(self, stone: Stone, selected_position_index: int) -> None:
         self.triangles[selected_position_index].insert_stone(stone)
