@@ -330,21 +330,21 @@ class Board:
         stone = self.triangles[selected_position_index].get_stone()
         self.set_border_stone_info((stone, selected_position_index))
 
-    def get_received_move_type(self, a_move) -> MoveType:
-        return MoveType[a_move[0]]
+    def get_received_move_type(self, a_move: dict[str, str]) -> MoveType:
+        return MoveType[a_move["move_type"]]
 
-    def verify_if_is_game_over(self, game_over: str):
+    def verify_if_is_game_over(self, game_over: str) -> bool:
         return bool(game_over)
 
-    def receive_move(self, a_move):
+    def receive_move(self, a_move: dict[str, str]) -> None:
         received_move_type = self.get_received_move_type(a_move)
         if received_move_type == MoveType.INSERT:
-            stone = self.local_player.get_stone(a_move["stone_value"], a_move["in_left"])
+            stone = self.local_player.get_stone(int(a_move["stone_value"]), bool(a_move["in_left"]))
             self.local_player.remove_stone(stone)
-            self.insert_stone(stone, a_move["triangle_index"])
+            self.insert_stone(stone, int(a_move["triangle_index"]))
         else:
-            stone = self.remove_stone(a_move["triangle_index"])
-            self.local_player.insert_stone(stone, a_move["in_left"])
+            stone = self.remove_stone(int(a_move["triangle_index"]))
+            self.local_player.insert_stone(stone, bool(a_move["in_left"]))
         is_game_over = self.verify_if_is_game_over(a_move["game_over"])
         if is_game_over:
             self.remote_player.set_winner()
@@ -354,7 +354,7 @@ class Board:
             self.local_player.toggle_turn()
             self.set_game_state(GameState.LOCAL_PLAYER_TO_MOVE)
 
-    def receive_withdrawal_notification(self):
+    def receive_withdrawal_notification(self) -> None:
         self.game_state = GameState.ABANDONED_BY_OTHER_PLAYER
 
     def reset_move_related_attributes(self) -> None:

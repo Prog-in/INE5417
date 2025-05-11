@@ -255,7 +255,7 @@ class PlayerInterface(DogPlayerInterface):
             self.update_gui()
             messagebox.showinfo(message="Partida iniciada!")
 
-    def receive_move(self, a_move) -> None:
+    def receive_move(self, a_move: dict[str, str]) -> None:
         print("received move:", a_move)
         game_state = self.game_interface.get_game_state()
         if game_state == GameState.REMOTE_PLAYER_TO_MOVE:
