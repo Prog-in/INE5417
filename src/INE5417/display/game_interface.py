@@ -69,7 +69,7 @@ class GameInterface:
             image=self.assets["board"],
             tags="board",
         )
-        circles_coordinates = (
+        positions_coordinates = (
             (320, 100),
             (420, 130),
             (480, 195),
@@ -84,7 +84,7 @@ class GameInterface:
             (220, 105),
         )
         for i in range(12):
-            x, y = circles_coordinates[i]
+            x, y = positions_coordinates[i]
             button_triangle = self.canvas_board.create_image(
                 x, y, image=self.assets["circle"], state=tk.HIDDEN, tags=f"circle{i}"
             )
@@ -92,6 +92,26 @@ class GameInterface:
                 button_triangle,
                 "<ButtonRelease-1>",
                 lambda event, index=i: self.position_selected(index),
+            )
+
+        borders_coordinates = (
+            (320, 55),
+            (420, 130),
+            (480, 195),
+            (490, 275),
+            (450, 350),
+            (360, 400),
+            (265, 410),
+            (170, 380),
+            (105, 315),
+            (90, 230),
+            (135, 155),
+            (220, 105),
+        )
+        for i in range(12):
+            x, y = borders_coordinates[i]
+            self.canvas_board.create_image(
+                x, y, image=self.assets["circle"], state=tk.NORMAL, tags=f"border{i}"
             )
 
         local_player_stones_frame = self.initialize_player_stone_frame(
@@ -133,24 +153,27 @@ class GameInterface:
     def get_rightmost_stone_button(self, stone_color: str, stone_value: int) -> ttk.Button:
         return self.stone_buttons[stone_color + str(stone_value) + ".2"]
 
-    def update_stone_state(
-        self, stone_color: str, stone_value: int, in_left: bool, state: str
-    ) -> None:
+    def identify_stone_button(self, stone_color: str, stone_value: int, in_left: bool, state: str) -> ttk.Button:
         if in_left:
             stone_button = self.get_leftmost_stone_button(stone_color, stone_value)
             if stone_button.cget("state") != state:
-                stone_button.configure(state=state)
+                return stone_button
             else:
                 stone_button = self.get_rightmost_stone_button(stone_color, stone_value)
-                stone_button.configure(state=state)
-            stone_button.update()
+                return stone_button
         else:
             stone_button = self.get_rightmost_stone_button(stone_color, stone_value)
             if stone_button.cget("state") != state:
-                stone_button.configure(state=state)
+                return stone_button
             else:
                 stone_button = self.get_leftmost_stone_button(stone_color, stone_value)
-                stone_button.configure(state=state)
+                return stone_button
+
+    def update_stone_state(
+        self, stone_color: str, stone_value: int, in_left: bool, state: str
+    ) -> None:
+            stone_button = self.identify_stone_button(stone_color, stone_value, in_left, state)
+            stone_button.configure(state=state)
             stone_button.update()
 
     def update_stones_state(self, state: str):
@@ -182,3 +205,41 @@ class GameInterface:
                 move_to_send = self.board.get_move_to_send()
                 self.player_interface.send_move(move_to_send)
                 self.player_interface.update_board(move_to_send)
+
+    def get_move_type_from_move(self, move: dict[str, str]) -> MoveType:
+        return MoveType[move["move_type"]]
+
+    def identify_stone_value_from_move(self, move: dict[str, str]) -> int:
+        return int(move["stone_value"])
+
+    def identify_position_from_move(self, move: dict[str, str]) -> int:
+        return int(move["triangle_index"])
+
+    def identify_in_left_from_move(self, move: dict[str, str]) -> bool:
+        return bool(move["in_left"])
+
+    def remove_stone_from_border(self, stone):
+        ...
+
+    def update_board(self, move: dict[str, str]) -> None:
+        stone_value = self.identify_stone_value_from_move(move)
+        position = self.identify_position_from_move(move)
+
+        is_local_player_stone_in_border = self.board.is_local_player_stone_in_border()
+        if is_local_player_stone_in_border:
+            local_player_stone_in_border = self.board.get_local_player_stone_in_border()
+            local_player_stone_in_border_value = local_player_stone_in_border.get_value()
+            local_player_stone_in_border_color = local_player_stone_in_border.get_color()
+            self.update_stone_state(local_player_stone_in_border_color, local_player_stone_in_border_value, True, tk.NORMAL)
+            self.remove_stone_from_border()
+
+        move_type = self.get_move_type_from_move(move)
+        in_left = self.identify_in_left_from_move(move)
+
+        if move_type == MoveType.INSERT:
+            self.update_stone_state(
+                move["stone_color"], stone_value, in_left, tk.HIDDEN
+            )
+            self.draw_stone_in_position(position, stone_value)
+        else:
+            self.draw_empty_position(position)

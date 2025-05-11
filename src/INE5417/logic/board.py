@@ -14,14 +14,24 @@ class Board:
         self.is_legal_move: bool | None = None
         self.previous_move_info: None | tuple[MoveType, int, int] = None
         self.selected_stone: Stone | None = None
+        self.border_stone_info: tuple[Stone, int] | None = None
         self.move_to_send: dict[str, str] = {}
         self.move_type: MoveType | None = None
         self.triangles: list[Triangle] = []
         for i in range(12):
             self.triangles.append(Triangle(i))
 
-    def get_players_colors(self) -> tuple[str, str]:
-        return self.local_player.get_color(), self.remote_player.get_color()
+    def is_local_player_stone_in_border(self) -> bool:
+        if self.border_stone_info is None:
+            return False
+        else:
+            return True
+
+    def get_border_stone_info(self) -> tuple[Stone, int]:
+        return self.border_stone_info
+
+    def get_local_player_stone_in_border(self) -> Stone:
+        return self.border_stone_info[0]
 
     def calculate_range(
         self, previous_move_stone_value: int, previous_move_position: int

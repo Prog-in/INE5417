@@ -271,9 +271,7 @@ class PlayerInterface(DogPlayerInterface):
             self.update_gui()
 
     def update_board(self, move: dict[str, str]) -> None:
-        self.game_interface.update_stone_state(
-            move["stone_color"], int(move["stone_value"]), bool(move["in_left"]), tk.HIDDEN
-        )
+        self.game_interface.update_board(move)
 
     def is_main_screen_filled(self) -> bool:
         if self.main_frame is not None:
