@@ -192,13 +192,15 @@ class GameInterface:
         game_state = self.get_game_state()
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
             self.board.position_selected(position_id)
-            is_legal_move = self.board.get_is_legal_move()
-            if is_legal_move:
+            game_state = self.get_game_state()
+            if game_state == GameState.GAME_OVER or game_state == GameState.REMOTE_PLAYER_TO_MOVE:
+                self.board.set_is_legal_move(True)
                 move_to_send = self.board.get_move_to_send()
                 self.player_interface.update_board(move_to_send, True)
                 self.player_interface.send_move(move_to_send)
                 self.player_interface.update_gui()
             else:
+                self.board.set_is_legal_move(False)
                 messagebox.showinfo(message="Jogada inválida. Tente novamente")
 
     def get_move_type_from_move(self, move: dict[str, str]) -> MoveType:
