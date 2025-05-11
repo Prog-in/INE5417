@@ -210,6 +210,10 @@ class Board:
     def get_move_type(self) -> MoveType:
         return self.move_type
 
+    def get_value_of_stone_in_selected_position(self, selected_position_index: int) -> int:
+        stone_in_selected_position = self.triangles[selected_position_index].get_stone()
+        return stone_in_selected_position.get_value()
+
     def position_selected(self, selected_position_index: int) -> None:
         there_was_a_previous_move = self.there_was_a_previous_move()
         if there_was_a_previous_move:
@@ -222,6 +226,7 @@ class Board:
                     is_selected_position_valid = self.is_selected_position_valid(selected_position_index, legal_positions)
                     if is_selected_position_valid:
                         user_already_selected_a_stone = self.user_already_selected_a_stone()
+                        selected_stone_value = self.selected_stone.get_value()
                         if user_already_selected_a_stone:
                             is_first_local_player_move = self.is_first_local_player_move()
                             if not is_first_local_player_move:
@@ -230,13 +235,26 @@ class Board:
                                     last_local_player_move_position = self.get_last_local_player_move_position()
                                     if last_local_player_move_position == selected_position_index:
                                         last_local_player_move_stone_value = self.get_last_local_player_move_stone_value()
-                                        if last_local_player_move_stone_value == selected_position_index:
-                                            return
-                            selected_stone_value = self.selected_stone.get_value()
-                            self.register_stone_value_involved(selected_stone_value)
-                            self.register_move_type_involved(MoveType.INSERT)
-                            self.insert_stone(self.selected_stone, selected_position_index)
-                            self.local_player.remove_stone(self.selected_stone)
+                                        if not last_local_player_move_stone_value == selected_stone_value:
+                                            self.register_stone_value_involved(selected_stone_value)
+                                            self.register_move_type_involved(MoveType.INSERT)
+                                            self.insert_stone(self.selected_stone, selected_position_index)
+                                            self.local_player.remove_stone(self.selected_stone)
+                                    else:
+                                        self.register_stone_value_involved(selected_stone_value)
+                                        self.register_move_type_involved(MoveType.INSERT)
+                                        self.insert_stone(self.selected_stone, selected_position_index)
+                                        self.local_player.remove_stone(self.selected_stone)
+                                else:
+                                    self.register_stone_value_involved(selected_stone_value)
+                                    self.register_move_type_involved(MoveType.INSERT)
+                                    self.insert_stone(self.selected_stone, selected_position_index)
+                                    self.local_player.remove_stone(self.selected_stone)
+                            else:
+                                self.register_stone_value_involved(selected_stone_value)
+                                self.register_move_type_involved(MoveType.INSERT)
+                                self.insert_stone(self.selected_stone, selected_position_index)
+                                self.local_player.remove_stone(self.selected_stone)
                         else:
                             return
                     else:
@@ -245,8 +263,7 @@ class Board:
                     legal_positions = self.calculate_range_removed_old_stone(previous_move_position)
                     is_selected_position_valid = self.is_selected_position_valid(selected_position_index, legal_positions)
                     if is_selected_position_valid:
-                        stone_in_selected_position = self.triangles[selected_position_index].get_stone()
-                        stone_in_selected_position_value = stone_in_selected_position.get_value()
+                        stone_in_selected_position_value = self.get_value_of_stone_in_selected_position(selected_position_index)
                         self.register_stone_value_involved(stone_in_selected_position_value)
                         self.register_move_type_involved(MoveType.REMOVE)
                         self.register_in_border(selected_position_index)
@@ -264,20 +281,28 @@ class Board:
                         is_local_player_stone_in_selected_position = self.is_stone_of_given_color_in_selected_position(selected_position_index, local_player_color)
                         if not is_local_player_stone_in_selected_position:
                             last_local_player_move_type = self.get_last_local_player_move_type()
+                            selected_stone_value = self.selected_stone.get_value()
                             if not last_local_player_move_type == MoveType.REMOVE:
                                 last_local_player_move_position = self.get_last_local_player_move_position()
                                 if last_local_player_move_position == selected_position_index:
                                     last_local_player_move_stone_value = self.get_last_local_player_move_stone_value()
-                                    if last_local_player_move_stone_value == selected_position_index:
-                                        return
-                            selected_stone_value = self.selected_stone.get_value()
-                            self.register_stone_value_involved(selected_stone_value)
-                            self.register_move_type_involved(MoveType.INSERT)
-                            self.insert_stone(self.selected_stone, selected_position_index)
-                            self.local_player.remove_stone(self.selected_stone)
+                                    if not last_local_player_move_stone_value == selected_stone_value:
+                                        self.register_stone_value_involved(selected_stone_value)
+                                        self.register_move_type_involved(MoveType.INSERT)
+                                        self.insert_stone(self.selected_stone, selected_position_index)
+                                        self.local_player.remove_stone(self.selected_stone)
+                                else:
+                                    self.register_stone_value_involved(selected_stone_value)
+                                    self.register_move_type_involved(MoveType.INSERT)
+                                    self.insert_stone(self.selected_stone, selected_position_index)
+                                    self.local_player.remove_stone(self.selected_stone)
+                            else:
+                                self.register_stone_value_involved(selected_stone_value)
+                                self.register_move_type_involved(MoveType.INSERT)
+                                self.insert_stone(self.selected_stone, selected_position_index)
+                                self.local_player.remove_stone(self.selected_stone)
                         else:
-                            stone_in_selected_position = self.triangles[selected_position_index].get_stone()
-                            stone_in_selected_position_value = stone_in_selected_position.get_value()
+                            stone_in_selected_position_value = self.get_value_of_stone_in_selected_position(selected_position_index)
                             self.register_stone_value_involved(stone_in_selected_position_value)
                             self.register_move_type_involved(MoveType.REMOVE)
                             self.register_in_border(selected_position_index)
@@ -290,19 +315,33 @@ class Board:
             user_already_selected_a_stone = self.user_already_selected_a_stone()
             if user_already_selected_a_stone:
                 is_first_local_player_move = self.is_first_local_player_move()
+                selected_stone_value = self.selected_stone.get_value()
                 if not is_first_local_player_move:
                     last_local_player_move_type = self.get_last_local_player_move_type()
                     if not last_local_player_move_type == MoveType.REMOVE:
                         last_local_player_move_position = self.get_last_local_player_move_position()
                         if last_local_player_move_position == selected_position_index:
                             last_local_player_move_stone_value = self.get_last_local_player_move_stone_value()
-                            if last_local_player_move_stone_value == selected_position_index:
-                                return
-                selected_stone_value = self.selected_stone.get_value()
-                self.register_stone_value_involved(selected_stone_value)
-                self.register_move_type_involved(MoveType.INSERT)
-                self.insert_stone(self.selected_stone, selected_position_index)
-                self.local_player.remove_stone(self.selected_stone)
+                            if not last_local_player_move_stone_value == selected_stone_value:
+                                self.register_stone_value_involved(selected_stone_value)
+                                self.register_move_type_involved(MoveType.INSERT)
+                                self.insert_stone(self.selected_stone, selected_position_index)
+                                self.local_player.remove_stone(self.selected_stone)
+                        else:
+                            self.register_stone_value_involved(selected_stone_value)
+                            self.register_move_type_involved(MoveType.INSERT)
+                            self.insert_stone(self.selected_stone, selected_position_index)
+                            self.local_player.remove_stone(self.selected_stone)
+                    else:
+                        self.register_stone_value_involved(selected_stone_value)
+                        self.register_move_type_involved(MoveType.INSERT)
+                        self.insert_stone(self.selected_stone, selected_position_index)
+                        self.local_player.remove_stone(self.selected_stone)
+                else:
+                    self.register_stone_value_involved(selected_stone_value)
+                    self.register_move_type_involved(MoveType.INSERT)
+                    self.insert_stone(self.selected_stone, selected_position_index)
+                    self.local_player.remove_stone(self.selected_stone)
             else:
                 return
 
