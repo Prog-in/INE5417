@@ -59,20 +59,12 @@ class Player:
     def set_winner(self) -> None:
         self.winner = True
 
-    def get_stone_index(self, in_left: bool) -> int:
-        if in_left: # get the leftmost stone index
-            return 0
-        else: # get the rightmost stone index
-            return -1
-
     def get_stone(self, value: int, in_left: bool) -> Stone:
-        stone_index = self.get_stone_index(in_left)
-        return self.stones[value][stone_index]
+        return self.stones[value][in_left - 1]
 
     def insert_stone(self, stone: Stone, in_left: bool) -> None:
         selected_stone_value = stone.get_value()
-        stone_index = self.get_stone_index(in_left)
-        self.stones[selected_stone_value].insert(stone_index, stone)
+        self.stones[selected_stone_value].insert(in_left - 1, stone)
 
     def remove_stone(self, selected_stone: Stone) -> None:
         selected_stone_value = selected_stone.get_value()
