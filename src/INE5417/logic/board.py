@@ -27,11 +27,23 @@ class Board:
         else:
             return True
 
+    def set_border_stone_info(self, border_stone_info: tuple[Stone, int] | None) -> None:
+        self.border_stone_info = border_stone_info
+
     def get_border_stone_info(self) -> tuple[Stone, int]:
         return self.border_stone_info
 
     def get_local_player_stone_in_border(self) -> Stone:
         return self.border_stone_info[0]
+
+    def get_local_player_stone_in_border_position(self) -> int:
+        return self.border_stone_info[1]
+
+    def get_local_player_color(self) -> str:
+        return self.local_player.get_color()
+
+    def get_remote_player_color(self) -> str:
+        return self.remote_player.get_color()
 
     def calculate_range(
         self, previous_move_stone_value: int, previous_move_position: int
@@ -85,9 +97,6 @@ class Board:
             for t in candidate_moves
             if t.is_free() or t.get_stone().get_color() == self.local_player.get_color()
         ]
-        # for t in candidate_moves:
-        #    if t.is_free() or t.get_stone().get_color() == self.local_player.get_color():
-        #        yield t
 
     def generate_valid_move_list(self) -> list[Triangle]:
         stone_value = self.last_move_info[0].get_value()
@@ -330,6 +339,10 @@ class Board:
     def reset_move_related_attributes(self) -> None:
         self.last_move_info = None
         self.selected_stone = None
+        self.is_legal_move = None
+        self.move_type = None
+        self.previous_move_info = None
+        self.border_stone_info = None
 
     def remove_stones_from_triangles(self) -> None:
         for i in range(12):
