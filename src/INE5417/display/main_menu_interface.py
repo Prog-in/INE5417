@@ -1,11 +1,19 @@
 import tkinter as tk
 from tkinter import ttk
 
-from .abstract_helper_interface import AbstractHelperInterface
 from ..utils.constants import WINDOW_WIDTH, WINDOW_HEIGHT
 
 
-class MainMenuInterface(AbstractHelperInterface):
+class MainMenuInterface:
+    def __init__(self, root: tk.Tk, assets: dict[str, tk.PhotoImage], player_interface):
+        self.root: tk.Tk = root
+        self.assets: dict[str, tk.PhotoImage] = assets
+        self.player_interface = player_interface
+        self.frame: ttk.Frame = self.initialize_frame()
+
+    def get_frame(self):
+        return self.frame
+
     def initialize_frame(self) -> ttk.Frame:
         menu_frame = ttk.Frame(self.root)
 

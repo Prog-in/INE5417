@@ -1,17 +1,22 @@
 import tkinter as tk
 from tkinter import ttk
 
-from .abstract_helper_interface import AbstractHelperInterface
 from ..utils.constants import BOARD_WIDTH, BOARD_HEIGHT, COLOR_A, COLOR_B
 
 
-class GameInterface(AbstractHelperInterface):
+class GameInterface:
     def __init__(
         self, root: tk.Tk, assets: dict[str, tk.PhotoImage], player_interface
     ) -> None:
         self.canvas_board: tk.Canvas | None = None
         self.stone_buttons: dict[str, tk.Button] = {}
-        super().__init__(root, assets, player_interface)
+        self.root: tk.Tk = root
+        self.assets: dict[str, tk.PhotoImage] = assets
+        self.player_interface = player_interface
+        self.frame: ttk.Frame = self.initialize_frame()
+
+    def get_frame(self):
+        return self.frame
 
     def initialize_player_stone_frame(
         self, player_color: str, parent_widget: tk.Widget, is_local: bool, text: str
