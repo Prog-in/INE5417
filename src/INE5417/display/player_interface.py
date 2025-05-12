@@ -319,6 +319,8 @@ class PlayerInterface(DogPlayerInterface):
             self.main_frame.pack(
                 fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True
             )
+            self.game_interface.set_game_state(GameState.MAIN_MENU)
+            self.update_gui()
 
     def send_move(self, move: dict[str, str]) -> None:
         self.dog.send_move(move)
