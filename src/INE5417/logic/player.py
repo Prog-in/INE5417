@@ -68,4 +68,7 @@ class Player:
 
     def remove_stone(self, selected_stone: Stone) -> None:
         selected_stone_value = selected_stone.get_value()
+        print("selected_stone:", selected_stone)
+        print("selected stone value:", selected_stone_value)
+        print("stones with this value:", self.stones[selected_stone_value])
         self.stones[selected_stone_value].remove(selected_stone)

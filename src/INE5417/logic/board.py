@@ -316,7 +316,10 @@ class Board:
         return MoveType[a_move["move_type"]]
 
     def verify_if_is_game_over(self, a_move: dict[str, str]) -> bool:
-        return bool(a_move["game_over"])
+        if a_move["game_over"] == "True":
+            return True
+        else:
+            return False
 
     def receive_move(self, a_move: dict[str, str]) -> None:
         received_move_type = self.get_received_move_type(a_move)
