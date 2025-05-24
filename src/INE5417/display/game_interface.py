@@ -14,6 +14,7 @@ class GameInterface:
         self.board: Board = Board()
         self.canvas_board: tk.Canvas | None = None
         self.stone_buttons: dict[str, tk.Button] = dict()
+        self.pressed_button: tk.Button | None = None
         self.root: tk.Tk = root
         self.assets: dict[str, tk.PhotoImage] = assets
         self.player_interface = player_interface
@@ -35,21 +36,25 @@ class GameInterface:
         text_label = ttk.Label(player_stones_frame, text=text)
         text_label.grid(column=0, row=0, columnspan=2, pady=1)
 
+
         for i in range(6):
-            button_stone_1 = ttk.Button(
+            button_stone_1 = tk.Button(
                 player_stones_frame,
                 image=self.assets[f"{player_color}{i}"],
-                command=lambda index=i: self.stone_selected(index, True) if is_local else "",
-                state=tk.NORMAL if is_local else tk.DISABLED,
-                style="flat.TButton",
+                state=tk.DISABLED,
+                relief="flat",
             )
-            button_stone_2 = ttk.Button(
+            button_stone_2 = tk.Button(
                 player_stones_frame,
                 image=self.assets[f"{player_color}{i}"],
-                command=lambda index=i: self.stone_selected(index, False) if is_local else "",
-                state=tk.NORMAL if is_local else tk.DISABLED,
-                style="flat.TButton",
+                state=tk.DISABLED,
+                relief="flat",
             )
+            if is_local:
+                button_stone_1.configure(state=tk.NORMAL)
+                button_stone_2.configure(state=tk.NORMAL)
+                button_stone_1.bind("<Button-1>", lambda event, stone=button_stone_1, index=i, in_left=True: self.stone_selected(stone, index, in_left))
+                button_stone_2.bind("<Button-1>", lambda event, stone=button_stone_2, index=i, in_left=False: self.stone_selected(stone, index, in_left))
             self.stone_buttons[player_color + str(i) + ".1"] = button_stone_1
             self.stone_buttons[player_color + str(i) + ".2"] = button_stone_2
             button_stone_1.grid(row=i + 1, column=0, padx=0, pady=0)
@@ -57,7 +62,7 @@ class GameInterface:
 
         return player_stones_frame
 
-    def initialize_frame(self, local_player_color: str, remote_player_color: str) -> None:
+    def initialize_frame(self) -> None:
         self.frame = ttk.Frame(self.root)
 
         self.canvas_board = tk.Canvas(
@@ -86,7 +91,7 @@ class GameInterface:
         for i in range(12):
             x, y = positions_coordinates[i]
             button_triangle = self.canvas_board.create_image(
-                x, y, image=self.assets["circle"], state=tk.HIDDEN, tags=f"circle{i}"
+                x, y, image=self.assets["circle"], state=tk.NORMAL, tags=f"circle{i}"
             )
             self.canvas_board.tag_bind(
                 button_triangle,
@@ -113,6 +118,9 @@ class GameInterface:
             self.canvas_board.create_image(
                 x, y, state=tk.HIDDEN, tags=f"border{i}"
             )
+
+        local_player_color = self.board.get_local_player_color()
+        remote_player_color = self.board.get_remote_player_color()
 
         local_player_stones_frame = self.initialize_player_stone_frame(
             local_player_color, self.frame, True, "Peças do jogador local"
@@ -150,14 +158,14 @@ class GameInterface:
     def identify_stone_button(self, stone_color: str, stone_value: int, in_left: bool, state: str) -> ttk.Button:
         if in_left:
             stone_button = self.get_leftmost_stone_button(stone_color, stone_value)
-            if stone_button.cget("state") != state:
+            if stone_button.cget("state") == state:
                 return stone_button
             else:
                 stone_button = self.get_rightmost_stone_button(stone_color, stone_value)
                 return stone_button
         else:
             stone_button = self.get_rightmost_stone_button(stone_color, stone_value)
-            if stone_button.cget("state") != state:
+            if stone_button.cget("state") == state:
                 return stone_button
             else:
                 stone_button = self.get_leftmost_stone_button(stone_color, stone_value)
@@ -175,10 +183,14 @@ class GameInterface:
             button.configure(state=state)
             button.update()
 
-    def update_circle_visibility(self, index: int, state: str) -> None:
-        self.canvas_board.itemconfig(f"circle{index}", state=state)
+    def set_pressed_button(self, button: tk.Button | None) -> None:
+        self.pressed_button = button
 
-    def stone_selected(self, stone_value: int, in_left: bool) -> None:
+    def stone_selected(self, pressed_button: ttk.Button, stone_value: int, in_left: bool) -> None:
+        if self.pressed_button is not None:
+            self.pressed_button.configure(background="#d9d9d9")
+        self.set_pressed_button(pressed_button)
+        self.pressed_button.configure(background="yellow")
         game_state = self.get_game_state()
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
             self.board.stone_selected(stone_value, in_left)
@@ -186,12 +198,15 @@ class GameInterface:
     def position_selected(self, position_id: int) -> None:
         game_state = self.get_game_state()
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
+            self.set_pressed_button(None)
             self.board.position_selected(position_id)
             game_state = self.get_game_state()
             if game_state == GameState.GAME_OVER or game_state == GameState.REMOTE_PLAYER_TO_MOVE:
                 self.board.set_is_legal_move(True)
                 move_to_send = self.board.get_move_to_send()
-                self.player_interface.update_board(move_to_send, True)
+                # TODO: ler mais sobre "match_status" no DOG
+                move_to_send["match_status"] = "next"
+                self.update_board(move_to_send, True)
                 self.player_interface.send_move(move_to_send)
                 self.player_interface.update_gui()
             else:
@@ -208,7 +223,16 @@ class GameInterface:
         return int(move["triangle_index"])
 
     def identify_in_left_from_move(self, move: dict[str, str]) -> bool:
-        return bool(move["in_left"])
+        if move["in_left"] == "True":
+            return True
+        else:
+            return False
+
+    def decide_button_state(self, is_local_move: bool) -> str:
+        if is_local_move:
+            return tk.NORMAL
+        else:
+            return tk.DISABLED
 
     def update_board(self, move: dict[str, str], is_local_move: bool) -> None:
         stone_value = self.identify_stone_value_from_move(move)
@@ -225,19 +249,20 @@ class GameInterface:
             local_player_stone_in_border_value = local_player_stone_in_border.get_value()
             local_player_stone_in_border_position = self.board.get_local_player_stone_in_border_position()
             self.canvas_board.itemconfig(f"circle{local_player_stone_in_border_position}", state=tk.HIDDEN)
+            # TODO: Adaptar a lógica para buscar por botão esquecido (grid_forget)
             border_stone_button = self.identify_stone_button(local_player_stone_in_border_color, local_player_stone_in_border_value, True, tk.HIDDEN)
-            border_stone_button.configure(state=tk.NORMAL)
+            border_stone_button.grid()
             border_stone_button.update()
             self.board.set_border_stone_info(None)
 
         move_type = self.get_move_type_from_move(move)
         if move_type == MoveType.INSERT:
             in_left = self.identify_in_left_from_move(move)
-            selected_stone_button = self.identify_stone_button(stone_color, stone_value, in_left, tk.NORMAL)
-            selected_stone_button.configure(state=tk.HIDDEN)
+            state = self.decide_button_state(is_local_move)
+            selected_stone_button = self.identify_stone_button(stone_color, stone_value, in_left, state)
+            selected_stone_button.grid_forget()
             selected_stone_button.update()
             self.canvas_board.itemconfig(f"circle{position}", image=self.assets[stone_color + str(stone_value)])
         else:
-            self.canvas_board.itemconfig(f"circle{position}", image=self.assets["circle"])
-            self.canvas_board.itemconfig(f"border{position}", image=self.assets[stone_color + str(stone_value)])
-
+            self.canvas_board.itemconfig(f"circle{position}", state=tk.NORMAL, image=self.assets["circle"])
+            self.canvas_board.itemconfig(f"border{position}", state=tk.NORMAL, image=self.assets[stone_color + str(stone_value)])

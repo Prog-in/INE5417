@@ -11,30 +11,21 @@ class Player:
         self.color: str | None = None
         self.stones: list[list[Stone]] = []
         for i in range(6):
-            same_value_stones = []
-            for j in range(2):
-                same_value_stones.append(Stone(i))
-                same_value_stones.append(Stone(i))
-            self.stones.append(same_value_stones)
+            self.stones.append([Stone(i), Stone(i)])
 
     def reset(self) -> None:
-        self.id: str = ""
-        self.name: str = ""
-        self.turn: bool = False
-        self.winner: bool = False
+        self.id = ""
+        self.name = ""
+        self.turn = False
+        self.winner = False
         self.stones = []
         for i in range(6):
-            same_value_stones = []
-            for j in range(2):
-                same_value_stones.append(Stone(i))
-                same_value_stones.append(Stone(i))
-            self.stones.append(same_value_stones)
+            self.stones.append([Stone(i), Stone(i)])
 
     def update(self, player_name: str, player_id: str) -> None:
         for i in range(6):
             for j in range(2):
-                stone = self.stones[i][j]
-                stone.update(self.color)
+                self.stones[i][j].update(self.color)
         self.id = player_id
         self.name = player_name
 
