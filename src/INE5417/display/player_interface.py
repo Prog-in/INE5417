@@ -229,6 +229,7 @@ class PlayerInterface(DogPlayerInterface):
         else:
             self.set_theme(Theme.DEFAULT)
         self.assets = self.load_assets()
+        # TODO: mudar apenas no menu principal (difícil implementar essa mudança durante a partida)
         self.main_menu_interface.update_widgets_images(self.assets)
         self.game_interface.update_widgets_images(self.assets)
 
@@ -237,22 +238,26 @@ class PlayerInterface(DogPlayerInterface):
         self.root.config(menu=menubar)
         self.message_label.pack(fill=tk.X, side=tk.BOTTOM, expand=False)
 
+    def perform_match_start(self, start_status: StartStatus) -> None:
+        players = start_status.get_players()
+        self.game_interface.start_match(players)
+        self.game_interface.initialize_frame()
+        game_frame = self.game_interface.get_frame()
+        is_main_screen_filled = self.is_main_screen_filled()
+        if is_main_screen_filled:
+            self.main_frame.pack_forget()
+        self.set_main_frame(game_frame)
+        self.main_frame.pack(
+            fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True
+        )
+        self.game_interface.set_game_state(GameState.LOCAL_PLAYER_TO_MOVE)
+        self.update_gui()
+
     def receive_start(self, start_status: StartStatus) -> None:
         game_state = self.game_interface.get_game_state()
+        print("received start")
         if game_state == GameState.MAIN_MENU:
-            players = start_status.get_players()
-            self.game_interface.start_match(players)
-            self.game_interface.initialize_frame(COLOR_B, COLOR_A)
-            game_frame = self.game_interface.get_frame()
-            is_main_screen_filled = self.is_main_screen_filled()
-            if is_main_screen_filled:
-                self.main_frame.pack_forget()
-            self.set_main_frame(game_frame)
-            self.main_frame.pack(
-                fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True
-            )
-            self.game_interface.set_game_state(GameState.REMOTE_PLAYER_TO_MOVE)
-            self.update_gui()
+            self.perform_match_start(start_status)
             messagebox.showinfo(message="Partida iniciada!")
 
     def receive_move(self, a_move: dict[str, str]) -> None:
@@ -260,7 +265,7 @@ class PlayerInterface(DogPlayerInterface):
         game_state = self.game_interface.get_game_state()
         if game_state == GameState.REMOTE_PLAYER_TO_MOVE:
             self.game_interface.receive_move(a_move)
-        self.update_board(a_move, False)
+        self.game_interface.update_board(a_move, False)
         self.update_gui()
 
     def receive_withdrawal_notification(self) -> None:
@@ -268,9 +273,6 @@ class PlayerInterface(DogPlayerInterface):
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE or GameState.REMOTE_PLAYER_TO_MOVE:
             self.game_interface.set_game_state(GameState.ABANDONED_BY_OTHER_PLAYER)
             self.update_gui()
-
-    def update_board(self, move: dict[str, str], is_local_move: bool) -> None:
-        self.game_interface.update_board(move, is_local_move)
 
     def is_main_screen_filled(self) -> bool:
         if self.main_frame is not None:
@@ -283,26 +285,13 @@ class PlayerInterface(DogPlayerInterface):
         if game_state == GameState.MAIN_MENU:
             answer = messagebox.askyesno("START", "Deseja iniciar uma nova partida?")
             if answer:
-                status: StartStatus = self.dog.start_match(2)
-                message: str = status.get_message()
-                code: str = status.get_code()
+                start_status: StartStatus = self.dog.start_match(2)
+                message: str = start_status.get_message()
+                code: str = start_status.get_code()
                 if code == "0" or code == "1":
                     messagebox.showinfo(message=message)
                 elif code == "2":
-                    players = status.get_players()
-                    self.game_interface.start_match(players)
-                    # TODO: verificar o que acontece ao iniciar uma segunda partida
-                    self.game_interface.initialize_frame(COLOR_A, COLOR_B)
-                    game_frame = self.game_interface.get_frame()
-                    is_main_screen_filled = self.is_main_screen_filled()
-                    if is_main_screen_filled:
-                        self.main_frame.pack_forget()
-                    self.set_main_frame(game_frame)
-                    self.main_frame.pack(
-                        fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True
-                    )
-                    self.game_interface.set_game_state(GameState.LOCAL_PLAYER_TO_MOVE)
-                    self.update_gui()
+                    self.perform_match_start(start_status)
                     messagebox.showinfo(message=message)
 
     def go_to_main_menu(self):

@@ -57,7 +57,7 @@ class GameInterface:
 
         return player_stones_frame
 
-    def initialize_frame(self, local_player_color: str, remote_player_color: str) -> None:
+    def initialize_frame(self) -> None:
         self.frame = ttk.Frame(self.root)
 
         self.canvas_board = tk.Canvas(
@@ -86,7 +86,7 @@ class GameInterface:
         for i in range(12):
             x, y = positions_coordinates[i]
             button_triangle = self.canvas_board.create_image(
-                x, y, image=self.assets["circle"], state=tk.HIDDEN, tags=f"circle{i}"
+                x, y, image=self.assets["circle"], state=tk.NORMAL, tags=f"circle{i}"
             )
             self.canvas_board.tag_bind(
                 button_triangle,
@@ -113,6 +113,9 @@ class GameInterface:
             self.canvas_board.create_image(
                 x, y, state=tk.HIDDEN, tags=f"border{i}"
             )
+
+        local_player_color = self.board.get_local_player_color()
+        remote_player_color = self.board.get_remote_player_color()
 
         local_player_stones_frame = self.initialize_player_stone_frame(
             local_player_color, self.frame, True, "Peças do jogador local"
@@ -191,7 +194,8 @@ class GameInterface:
             if game_state == GameState.GAME_OVER or game_state == GameState.REMOTE_PLAYER_TO_MOVE:
                 self.board.set_is_legal_move(True)
                 move_to_send = self.board.get_move_to_send()
-                self.player_interface.update_board(move_to_send, True)
+                move_to_send["match_status"] = "next"
+                self.update_board(move_to_send, True)
                 self.player_interface.send_move(move_to_send)
                 self.player_interface.update_gui()
             else:
@@ -208,7 +212,16 @@ class GameInterface:
         return int(move["triangle_index"])
 
     def identify_in_left_from_move(self, move: dict[str, str]) -> bool:
-        return bool(move["in_left"])
+        if move["in_left"] == "True":
+            return True
+        else:
+            return False
+
+    def decide_button_state(self, is_local_move: bool) -> str:
+        if is_local_move:
+            return tk.NORMAL
+        else:
+            return tk.DISABLED
 
     def update_board(self, move: dict[str, str], is_local_move: bool) -> None:
         stone_value = self.identify_stone_value_from_move(move)
@@ -225,16 +238,18 @@ class GameInterface:
             local_player_stone_in_border_value = local_player_stone_in_border.get_value()
             local_player_stone_in_border_position = self.board.get_local_player_stone_in_border_position()
             self.canvas_board.itemconfig(f"circle{local_player_stone_in_border_position}", state=tk.HIDDEN)
+            # TODO: Adaptar a lógica para buscar por botão esquecido (grid_forget)
             border_stone_button = self.identify_stone_button(local_player_stone_in_border_color, local_player_stone_in_border_value, True, tk.HIDDEN)
-            border_stone_button.configure(state=tk.NORMAL)
+            border_stone_button.grid()
             border_stone_button.update()
             self.board.set_border_stone_info(None)
 
         move_type = self.get_move_type_from_move(move)
         if move_type == MoveType.INSERT:
             in_left = self.identify_in_left_from_move(move)
-            selected_stone_button = self.identify_stone_button(stone_color, stone_value, in_left, tk.NORMAL)
-            selected_stone_button.configure(state=tk.HIDDEN)
+            state = self.decide_button_state(is_local_move)
+            selected_stone_button = self.identify_stone_button(stone_color, stone_value, in_left, state)
+            selected_stone_button.grid_forget()
             selected_stone_button.update()
             self.canvas_board.itemconfig(f"circle{position}", image=self.assets[stone_color + str(stone_value)])
         else:
