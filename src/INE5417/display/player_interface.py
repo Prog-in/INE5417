@@ -58,7 +58,7 @@ class PlayerInterface(DogPlayerInterface):
     def initialize_gui_elements(self) -> None:
         style = ttk.Style(self.root)
         style.theme_use("clam")
-        style.configure("flat.TButton", borderwidth=0, bg="")
+        style.configure("flat.TButton", borderwidth=0, background="")
         self.root.title(GAME_NAME)
         self.root.geometry(WINDOW_GEOMETRY)
         self.root.resizable(False, False)
@@ -129,84 +129,84 @@ class PlayerInterface(DogPlayerInterface):
 
         stone_colora_0_image_path = asset_dir_path / (COLOR_A + "0.png")
         stone_colora_0_image = Image.open(stone_colora_0_image_path).resize(
-            (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09))
+            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
         )
         resized_stone_colora_0_image = ImageTk.PhotoImage(stone_colora_0_image)
         assets[COLOR_A + "0"] = resized_stone_colora_0_image
 
         stone_colora_1_image_path = asset_dir_path / (COLOR_A + "1.png")
         stone_colora_1_image = Image.open(stone_colora_1_image_path).resize(
-            (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09))
+            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
         )
         resized_stone_colora_1_image = ImageTk.PhotoImage(stone_colora_1_image)
         assets[COLOR_A + "1"] = resized_stone_colora_1_image
 
         stone_colora_2_image_path = asset_dir_path / (COLOR_A + "2.png")
         stone_colora_2_image = Image.open(stone_colora_2_image_path).resize(
-            (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09))
+            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
         )
         resized_stone_colora_2_image = ImageTk.PhotoImage(stone_colora_2_image)
         assets[COLOR_A + "2"] = resized_stone_colora_2_image
 
         stone_colora_3_image_path = asset_dir_path / (COLOR_A + "3.png")
         stone_colora_3_image = Image.open(stone_colora_3_image_path).resize(
-            (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09))
+            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
         )
         resized_stone_colora_3_image = ImageTk.PhotoImage(stone_colora_3_image)
         assets[COLOR_A + "3"] = resized_stone_colora_3_image
 
         stone_colora_4_image_path = asset_dir_path / (COLOR_A + "4.png")
         stone_colora_4_image = Image.open(stone_colora_4_image_path).resize(
-            (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09))
+            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
         )
         resized_stone_colora_4_image = ImageTk.PhotoImage(stone_colora_4_image)
         assets[COLOR_A + "4"] = resized_stone_colora_4_image
 
         stone_colora_5_image_path = asset_dir_path / (COLOR_A + "5.png")
         stone_colora_5_image = Image.open(stone_colora_5_image_path).resize(
-            (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09))
+            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
         )
         resized_stone_colora_5_image = ImageTk.PhotoImage(stone_colora_5_image)
         assets[COLOR_A + "5"] = resized_stone_colora_5_image
 
         stone_colorb_0_image_path = asset_dir_path / (COLOR_B + "0.png")
         stone_colorb_0_image = Image.open(stone_colorb_0_image_path).resize(
-            (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09))
+            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
         )
         resized_stone_colorb_0_image = ImageTk.PhotoImage(stone_colorb_0_image)
         assets[COLOR_B + "0"] = resized_stone_colorb_0_image
 
         stone_colorb_1_image_path = asset_dir_path / (COLOR_B + "1.png")
         stone_colorb_1_image = Image.open(stone_colorb_1_image_path).resize(
-            (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09))
+            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
         )
         resized_stone_colorb_1_image = ImageTk.PhotoImage(stone_colorb_1_image)
         assets[COLOR_B + "1"] = resized_stone_colorb_1_image
 
         stone_colorb_2_image_path = asset_dir_path / (COLOR_B + "2.png")
         stone_colorb_2_image = Image.open(stone_colorb_2_image_path).resize(
-            (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09))
+            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
         )
         resized_stone_colorb_2_image = ImageTk.PhotoImage(stone_colorb_2_image)
         assets[COLOR_B + "2"] = resized_stone_colorb_2_image
 
         stone_colorb_3_image_path = asset_dir_path / (COLOR_B + "3.png")
         stone_colorb_3_image = Image.open(stone_colorb_3_image_path).resize(
-            (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09))
+            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
         )
         resized_stone_colorb_3_image = ImageTk.PhotoImage(stone_colorb_3_image)
         assets[COLOR_B + "3"] = resized_stone_colorb_3_image
 
         stone_colorb_4_image_path = asset_dir_path / (COLOR_B + "4.png")
         stone_colorb_4_image = Image.open(stone_colorb_4_image_path).resize(
-            (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09))
+            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
         )
         resized_stone_colorb_4_image = ImageTk.PhotoImage(stone_colorb_4_image)
         assets[COLOR_B + "4"] = resized_stone_colorb_4_image
 
         stone_colorb_5_image_path = asset_dir_path / (COLOR_B + "5.png")
         stone_colorb_5_image = Image.open(stone_colorb_5_image_path).resize(
-            (int(WINDOW_WIDTH * 0.09), int(WINDOW_HEIGHT * 0.09))
+            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
         )
         resized_stone_colorb_5_image = ImageTk.PhotoImage(stone_colorb_5_image)
         assets[COLOR_B + "5"] = resized_stone_colorb_5_image
@@ -229,6 +229,7 @@ class PlayerInterface(DogPlayerInterface):
         else:
             self.set_theme(Theme.DEFAULT)
         self.assets = self.load_assets()
+        # TODO: mudar apenas no menu principal (difícil implementar essa mudança durante a partida)
         self.main_menu_interface.update_widgets_images(self.assets)
         self.game_interface.update_widgets_images(self.assets)
 
@@ -237,22 +238,26 @@ class PlayerInterface(DogPlayerInterface):
         self.root.config(menu=menubar)
         self.message_label.pack(fill=tk.X, side=tk.BOTTOM, expand=False)
 
+    def perform_match_start(self, start_status: StartStatus, game_state: GameState) -> None:
+        players = start_status.get_players()
+        self.game_interface.start_match(players)
+        self.game_interface.initialize_frame()
+        game_frame = self.game_interface.get_frame()
+        is_main_screen_filled = self.is_main_screen_filled()
+        if is_main_screen_filled:
+            self.main_frame.pack_forget()
+        self.set_main_frame(game_frame)
+        self.main_frame.pack(
+            fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True
+        )
+        self.game_interface.set_game_state(game_state)
+        self.update_gui()
+
     def receive_start(self, start_status: StartStatus) -> None:
         game_state = self.game_interface.get_game_state()
+        print("received start")
         if game_state == GameState.MAIN_MENU:
-            players = start_status.get_players()
-            self.game_interface.start_match(players)
-            self.game_interface.initialize_frame(COLOR_B, COLOR_A)
-            game_frame = self.game_interface.get_frame()
-            is_main_screen_filled = self.is_main_screen_filled()
-            if is_main_screen_filled:
-                self.main_frame.pack_forget()
-            self.set_main_frame(game_frame)
-            self.main_frame.pack(
-                fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True
-            )
-            self.game_interface.set_game_state(GameState.REMOTE_PLAYER_TO_MOVE)
-            self.update_gui()
+            self.perform_match_start(start_status, GameState.REMOTE_PLAYER_TO_MOVE)
             messagebox.showinfo(message="Partida iniciada!")
 
     def receive_move(self, a_move: dict[str, str]) -> None:
@@ -260,7 +265,7 @@ class PlayerInterface(DogPlayerInterface):
         game_state = self.game_interface.get_game_state()
         if game_state == GameState.REMOTE_PLAYER_TO_MOVE:
             self.game_interface.receive_move(a_move)
-        self.update_board(a_move, False)
+        self.game_interface.update_board(a_move, False)
         self.update_gui()
 
     def receive_withdrawal_notification(self) -> None:
@@ -268,9 +273,6 @@ class PlayerInterface(DogPlayerInterface):
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE or GameState.REMOTE_PLAYER_TO_MOVE:
             self.game_interface.set_game_state(GameState.ABANDONED_BY_OTHER_PLAYER)
             self.update_gui()
-
-    def update_board(self, move: dict[str, str], is_local_move: bool) -> None:
-        self.game_interface.update_board(move, is_local_move)
 
     def is_main_screen_filled(self) -> bool:
         if self.main_frame is not None:
@@ -283,26 +285,13 @@ class PlayerInterface(DogPlayerInterface):
         if game_state == GameState.MAIN_MENU:
             answer = messagebox.askyesno("START", "Deseja iniciar uma nova partida?")
             if answer:
-                status: StartStatus = self.dog.start_match(2)
-                message: str = status.get_message()
-                code: str = status.get_code()
+                start_status: StartStatus = self.dog.start_match(2)
+                message: str = start_status.get_message()
+                code: str = start_status.get_code()
                 if code == "0" or code == "1":
                     messagebox.showinfo(message=message)
                 elif code == "2":
-                    players = status.get_players()
-                    self.game_interface.start_match(players)
-                    # TODO: verificar o que acontece ao iniciar uma segunda partida
-                    self.game_interface.initialize_frame(COLOR_A, COLOR_B)
-                    game_frame = self.game_interface.get_frame()
-                    is_main_screen_filled = self.is_main_screen_filled()
-                    if is_main_screen_filled:
-                        self.main_frame.pack_forget()
-                    self.set_main_frame(game_frame)
-                    self.main_frame.pack(
-                        fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True
-                    )
-                    self.game_interface.set_game_state(GameState.LOCAL_PLAYER_TO_MOVE)
-                    self.update_gui()
+                    self.perform_match_start(start_status, GameState.LOCAL_PLAYER_TO_MOVE)
                     messagebox.showinfo(message=message)
 
     def go_to_main_menu(self):
@@ -324,9 +313,6 @@ class PlayerInterface(DogPlayerInterface):
 
     def send_move(self, move: dict[str, str]) -> None:
         self.dog.send_move(move)
-
-    def update_circle_visibility(self, index: int, state: str) -> None:
-        self.game_interface.update_circle_visibility(index, state)
 
     def update_gui(self) -> None:
         game_state = self.game_interface.get_game_state()
