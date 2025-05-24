@@ -27,13 +27,12 @@ class PlayerInterface(DogPlayerInterface):
         super().__init__()
         self.root: tk.Tk = tk.Tk()
         self.board: Board = Board()
-        #TODO: Entender o motivo da chave ser str
         self.assets: dict[str, ImageTk.PhotoImage] = self.load_assets()
         self.stone_buttons: dict[str, ttk.Button] = {}
         self.stone_buttons_state: str = tk.DISABLED
         self.populate_window()
         self.menu_file: tk.Menu = self.initialize_menubar()
-        self.player_name: str = self.get_player_name()
+        # self.player_name: str = self.get_player_name()
         self.player_name: str = ""
         self.dog: DogActor = DogActor()
         self.initialize_dog()
