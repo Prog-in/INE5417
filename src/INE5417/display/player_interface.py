@@ -265,8 +265,8 @@ class PlayerInterface(DogPlayerInterface):
         game_state = self.game_interface.get_game_state()
         if game_state == GameState.REMOTE_PLAYER_TO_MOVE:
             self.game_interface.receive_move(a_move)
-        self.game_interface.update_board(a_move, False)
-        self.update_gui()
+            self.game_interface.update_board(a_move, False)
+            self.update_gui()
 
     def receive_withdrawal_notification(self) -> None:
         game_state = self.game_interface.get_game_state()
