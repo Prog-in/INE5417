@@ -15,6 +15,7 @@ class Board:
         self.last_opponent_move_info: tuple[int, int, MoveType] | None = None
         self.selected_stone_info: tuple[Stone, bool] | None = None
         self.border_stone_info: tuple[Stone, int] | None = None
+        self.removed_stone: Stone | None = None
         self.move_to_send: dict[str, str] = {}
         self.move_type: MoveType | None = None
         self.triangles: list[Triangle] = []
@@ -27,7 +28,7 @@ class Board:
     def is_selected_stone_in_left(self) -> bool:
         return self.selected_stone_info[1]
 
-    def is_local_player_stone_in_border(self) -> bool:
+    def is_stone_in_border(self) -> bool:
         if self.border_stone_info is None:
             return False
         else:
@@ -36,10 +37,10 @@ class Board:
     def set_border_stone_info(self, border_stone_info: tuple[Stone, int] | None) -> None:
         self.border_stone_info = border_stone_info
 
-    def get_local_player_stone_in_border(self) -> Stone:
+    def get_stone_in_border(self) -> Stone:
         return self.border_stone_info[0]
 
-    def get_local_player_stone_in_border_position(self) -> int:
+    def get_stone_in_border_position(self) -> int:
         return self.border_stone_info[1]
 
     def get_local_player_color(self) -> str:
@@ -174,7 +175,7 @@ class Board:
         return is_valid
 
     def is_stone_of_given_color_in_selected_position(self, selected_position_index: int, color: str) -> bool:
-        stone_in_triangle = self.triangles[selected_position_index].get_stone()
+        stone_in_triangle = self.get_stone_in_position(selected_position_index)
         if stone_in_triangle is not None:
             stone_in_triangle_color = stone_in_triangle.get_color()
             if stone_in_triangle_color == color:
@@ -209,10 +210,6 @@ class Board:
     def get_move_type(self) -> MoveType:
         return self.move_type
 
-    def get_value_of_stone_in_selected_position(self, selected_position_index: int) -> int:
-        stone_in_selected_position = self.triangles[selected_position_index].get_stone()
-        return stone_in_selected_position.get_value()
-
     def perform_stone_insertion(self, selected_position_index: int, selected_stone_value: int) -> None:
         self.register_stone_value_involved(selected_stone_value)
         self.register_move_type_involved(MoveType.INSERT)
@@ -221,13 +218,25 @@ class Board:
         selected_stone = self.get_selected_stone()
         self.insert_stone(selected_stone, selected_position_index)
         self.local_player.remove_stone(selected_stone)
+        self.set_selected_stone_info(None)
+
+    def get_value_of_stone_in_selected_position(self, selected_position_index: int) -> int:
+        stone_in_selected_position = self.get_stone_in_position(selected_position_index)
+        return stone_in_selected_position.get_value()
+
+    def set_removed_stone(self, removed_stone: Stone | None) -> None:
+        self.removed_stone = removed_stone
+
+    def get_removed_stone(self) -> Stone:
+        return self.removed_stone
 
     def perform_stone_remotion(self, selected_position_index: int) -> None:
         stone_in_selected_position_value = self.get_value_of_stone_in_selected_position(selected_position_index)
         self.register_stone_value_involved(stone_in_selected_position_value)
         self.register_move_type_involved(MoveType.REMOVE)
-        self.register_in_border(selected_position_index)
-        self.remove_stone(selected_position_index)
+        removed_stone = self.remove_stone(selected_position_index)
+        self.set_removed_stone(removed_stone)
+        print("fluxo remoção: info pedra na borda:", self.border_stone_info)
 
     def enter_in_stone_insertion_flux(self, selected_position_index: int) -> None:
         user_already_selected_a_stone = self.user_already_selected_a_stone()
@@ -310,9 +319,9 @@ class Board:
         removed_stone = self.triangles[selected_position_index].remove_stone()
         return removed_stone
 
-    def register_in_border(self, selected_position_index: int) -> None:
-        stone = self.triangles[selected_position_index].get_stone()
-        self.set_border_stone_info((stone, selected_position_index))
+    def get_stone_in_position(self, position: int) -> Stone:
+        print("position", position, ", stone:", self.triangles[position].get_stone(), "valor:", self.triangles[position].get_stone().get_value() if self.triangles[position].get_stone() is not None else "")
+        return self.triangles[position].get_stone()
 
     def get_received_move_type(self, a_move: dict[str, str]) -> MoveType:
         return MoveType[a_move["move_type"]]
@@ -332,6 +341,8 @@ class Board:
             self.update_last_opponent_move_info(int(a_move["stone_value"]), int(a_move["triangle_index"]), MoveType.INSERT)
         else:
             stone = self.remove_stone(int(a_move["triangle_index"]))
+            print("stone na remoção:", stone)
+            self.set_border_stone_info((stone, int(a_move["triangle_index"])))
             self.remote_player.insert_stone(stone, bool(a_move["in_left"]))
             self.update_last_opponent_move_info(int(a_move["stone_value"]), int(a_move["triangle_index"]), MoveType.REMOVE)
         is_game_over = self.verify_if_is_game_over(a_move)
@@ -352,6 +363,7 @@ class Board:
         self.is_legal_move = None
         self.move_type = None
         self.border_stone_info = None
+        self.removed_stone = None
 
     def remove_stones_from_triangles(self) -> None:
         for i in range(12):

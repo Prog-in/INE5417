@@ -53,7 +53,7 @@ class MainMenuInterface:
     def start_match(self) -> None:
         self.player_interface.start_match()
 
-    def update_widgets_images(self, new_assets: dict[str, tk.PhotoImage]) -> None:
-        self.assets = new_assets
+    def update_widgets_images(self, assets: dict[str, tk.PhotoImage]) -> None:
+        self.assets = assets
         self.menu_canvas.itemconfig("menu_image", image=self.assets["menu_image"])
         self.menu_canvas.itemconfig("menu_button", image=self.assets["menu_button"])
