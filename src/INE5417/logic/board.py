@@ -129,6 +129,9 @@ class Board:
         else:
             return False
 
+    def reset_move_signature(self) -> None:
+        self.move_to_send = {}
+
     def register_move_type_involved(self, move_type: MoveType) -> None:
         self.move_to_send["move_type"] = move_type.name
 
@@ -210,6 +213,7 @@ class Board:
         return self.move_type
 
     def perform_stone_insertion(self, selected_position_index: int, selected_stone_value: int) -> None:
+        self.reset_move_signature()
         self.register_stone_value_involved(selected_stone_value)
         self.register_move_type_involved(MoveType.INSERT)
         is_selected_stone_in_left = self.is_selected_stone_in_left()
