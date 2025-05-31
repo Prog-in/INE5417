@@ -17,7 +17,6 @@ class Board:
         self.border_stone_info: tuple[Stone, int] | None = None
         self.removed_stone: Stone | None = None
         self.move_to_send: dict[str, str] = {}
-        self.move_type: MoveType | None = None
         self.triangles: list[Triangle] = []
         for i in range(12):
             self.triangles.append(Triangle(i))
@@ -49,18 +48,34 @@ class Board:
     def get_remote_player_color(self) -> str:
         return self.remote_player.get_color()
 
+    def is_local_player_winner(self) -> bool:
+        return self.local_player.get_winner()
+
     def calculate_range(
-        self, previous_move_stone_value: int, previous_move_position: int
+        self, previous_move_stone_value: int, previous_move_position: int, player_color: str
     ) -> set[Triangle]:
-        return {
+        legal_positions_set = set()
+        possible_triangles = {
             self.triangles[(previous_move_position - previous_move_stone_value) % 12],
             self.triangles[(previous_move_position + previous_move_stone_value) % 12],
         }
+        legal_positions_list = list(possible_triangles)
+        list_length = len(legal_positions_list)
+        for i in range(list_length):
+            triangle = legal_positions_list[i]
+            if triangle.is_free():
+                legal_positions_set.add(triangle)
+            else:
+                stone = triangle.get_stone()
+                stone_color = stone.get_color()
+                if stone_color == player_color:
+                    legal_positions_set.add(triangle)
+        return legal_positions_set
 
     def calculate_range_removed_old_stone(
         self, previous_move_position: int, old_stone_color: str
     ) -> set[Triangle]:
-        valid_positions = set()
+        legal_positions = set()
         for i in range(1, 12):
             possible_triangles = [
                 self.triangles[(previous_move_position - i) % 12],
@@ -71,15 +86,15 @@ class Board:
                     stone = triangle.get_stone()
                     stone_color = stone.get_color()
                     if stone_color != old_stone_color:
-                        valid_positions.add(triangle)
-            if len(valid_positions) > 0:
-                break
-        return valid_positions
+                        legal_positions.add(triangle)
+            if len(legal_positions) > 0:
+                return legal_positions
+        return legal_positions
 
     def calculate_range_inserted_old_stone(
         self, previous_move_position: int
     ) -> set[Triangle]:
-        valid_positions = set()
+        legal_positions = set()
         for i in range(1, 12):
             possible_triangles = [
                 self.triangles[(previous_move_position - i) % 12],
@@ -87,14 +102,13 @@ class Board:
             ]
             for triangle in possible_triangles:
                 if triangle.is_free():
-                    valid_positions.add(triangle)
-            if len(valid_positions) > 0:
-                break
-        return valid_positions
+                    legal_positions.add(triangle)
+            if len(legal_positions) > 0:
+                return legal_positions
+        return legal_positions
 
-    def update_last_opponent_move_info(self, stone_value_involved: int, position_involved: int, move_type: MoveType) -> None:
+    def set_last_opponent_move_info(self, stone_value_involved: int, position_involved: int, move_type: MoveType) -> None:
         self.last_opponent_move_info = (stone_value_involved, position_involved, move_type)
-        self.set_selected_stone_info(None)
 
     def get_last_opponent_move_type(self) -> MoveType:
         return self.last_opponent_move_info[2]
@@ -125,10 +139,13 @@ class Board:
             return True
 
     def is_first_local_player_move(self) -> bool:
-        if self.move_type is None:
+        if self.move_to_send == {}:
             return True
         else:
             return False
+
+    def reset_move_signature(self) -> None:
+        self.move_to_send = {}
 
     def register_move_type_involved(self, move_type: MoveType) -> None:
         self.move_to_send["move_type"] = move_type.name
@@ -142,8 +159,12 @@ class Board:
     def register_in_left(self, in_left: bool) -> None:
         self.move_to_send["in_left"] = str(in_left)
 
+    # TODO: marcar como modelagem de algoritmo
     def register_game_over(self, is_game_over: bool) -> None:
-        self.move_to_send["game_over"] = str(is_game_over)
+        if is_game_over:
+            self.move_to_send["match_status"] = "finished"
+        else:
+            self.move_to_send["match_status"] = "next"
 
     def get_last_local_player_move_type(self) -> MoveType:
         return MoveType[self.move_to_send["move_type"]]
@@ -163,16 +184,17 @@ class Board:
     def get_is_legal_move(self) -> bool:
         return self.is_legal_move
 
-    def is_selected_position_valid(
-        self, selected_position_index: int, valid_positions: set[Triangle]
+    def is_selected_position_legal(
+        self, selected_position_index: int, legal_positions: set[Triangle]
     ) -> bool:
-        is_valid = False
-        for valid_position in valid_positions:
-            position_index = valid_position.get_index()
+        legal_positions_list = list(legal_positions)
+        list_length = len(legal_positions_list)
+        for i in range(list_length):
+            legal_position = legal_positions_list[i]
+            position_index = legal_position.get_index()
             if selected_position_index == position_index:
-                is_valid = True
-                break
-        return is_valid
+                return True
+        return False
 
     def is_stone_of_given_color_in_selected_position(self, selected_position_index: int, color: str) -> bool:
         stone_in_triangle = self.get_stone_in_position(selected_position_index)
@@ -185,8 +207,10 @@ class Board:
         else:
             return False
 
-    def calculate_valid_opponent_moves(self) -> set[Triangle]:
-        stone_color_involved = self.local_player.get_color()
+    def calculate_legal_opponent_moves(self) -> set[Triangle]:
+        local_player_color = self.local_player.get_color()
+        remote_player_color = self.remote_player.get_color()
+
         stone_value_involved = self.get_last_local_player_move_stone_value()
         move_type_involved = self.get_last_local_player_move_type()
         move_position_involved = self.get_last_local_player_move_position()
@@ -194,23 +218,19 @@ class Board:
             if move_type_involved == MoveType.INSERT:
                 return self.calculate_range_inserted_old_stone(move_position_involved)
             else:
-                return self.calculate_range_removed_old_stone(move_position_involved, stone_color_involved)
+                return self.calculate_range_removed_old_stone(move_position_involved, local_player_color)
         else:
-            return self.calculate_range(stone_value_involved, move_position_involved)
+            return self.calculate_range(stone_value_involved, move_position_involved, remote_player_color)
 
-    def there_are_valid_opponent_moves(self, valid_opponent_moves: set[Triangle]) -> bool:
-        if len(valid_opponent_moves) == 0:
+    def there_are_legal_opponent_moves(self, legal_opponent_moves: set[Triangle]) -> bool:
+        if len(legal_opponent_moves) == 0:
             return False
         else:
             return True
 
-    def set_move_type(self, move_type: MoveType) -> None:
-        self.move_type = move_type
-
-    def get_move_type(self) -> MoveType:
-        return self.move_type
-
     def perform_stone_insertion(self, selected_position_index: int, selected_stone_value: int) -> None:
+        self.reset_move_signature()
+        self.register_position_involved(selected_position_index)
         self.register_stone_value_involved(selected_stone_value)
         self.register_move_type_involved(MoveType.INSERT)
         is_selected_stone_in_left = self.is_selected_stone_in_left()
@@ -219,6 +239,7 @@ class Board:
         self.insert_stone(selected_stone, selected_position_index)
         self.local_player.remove_stone(selected_stone)
         self.set_selected_stone_info(None)
+        self.set_is_legal_move(True)
 
     def get_value_of_stone_in_selected_position(self, selected_position_index: int) -> int:
         stone_in_selected_position = self.get_stone_in_position(selected_position_index)
@@ -231,29 +252,48 @@ class Board:
         return self.removed_stone
 
     def perform_stone_remotion(self, selected_position_index: int) -> None:
+        self.reset_move_signature()
         stone_in_selected_position_value = self.get_value_of_stone_in_selected_position(selected_position_index)
+        self.register_position_involved(selected_position_index)
         self.register_stone_value_involved(stone_in_selected_position_value)
         self.register_move_type_involved(MoveType.REMOVE)
-        removed_stone = self.remove_stone(selected_position_index)
+        removed_stone = self.remove_stone_from_position(selected_position_index)
+        self.remote_player.insert_stone(removed_stone, False)
         self.set_removed_stone(removed_stone)
-        print("fluxo remoção: info pedra na borda:", self.border_stone_info)
+        self.set_is_legal_move(True)
 
-    def enter_in_stone_insertion_flux(self, selected_position_index: int) -> None:
+    # TODO: fazer modelagem de algoritmo
+    def get_number_of_stones_on_board_with_value(self, selected_stone_value: int) -> int:
+        counter = 0
+        for i in range(12):
+            if not self.triangles[i].is_free() and self.triangles[i].get_stone().get_value() == selected_stone_value:
+                counter += 1
+        return counter
+
+    def execute_stone_insertion(self, selected_position_index: int) -> None:
         user_already_selected_a_stone = self.user_already_selected_a_stone()
         if user_already_selected_a_stone:
             selected_stone = self.get_selected_stone()
             selected_stone_value = selected_stone.get_value()
-            is_first_local_player_move = self.is_first_local_player_move()
-            if not is_first_local_player_move:
-                last_local_player_move_type = self.get_last_local_player_move_type()
-                last_local_player_move_position = self.get_last_local_player_move_position()
-                last_local_player_move_stone_value = self.get_last_local_player_move_stone_value()
-                if not (last_local_player_move_type == MoveType.REMOVE
-                        and last_local_player_move_position == selected_position_index
-                        and last_local_player_move_stone_value == selected_stone_value):
+            number_of_stones_on_board_with_value = self.get_number_of_stones_on_board_with_value(selected_stone_value)
+            if number_of_stones_on_board_with_value < 2:
+                is_first_local_player_move = self.is_first_local_player_move()
+                if not is_first_local_player_move:
+                    last_local_player_move_type = self.get_last_local_player_move_type()
+                    last_local_player_move_position = self.get_last_local_player_move_position()
+                    last_local_player_move_stone_value = self.get_last_local_player_move_stone_value()
+                    if not (last_local_player_move_type == MoveType.REMOVE
+                            and last_local_player_move_position == selected_position_index
+                            and last_local_player_move_stone_value == selected_stone_value):
+                        self.perform_stone_insertion(selected_position_index, selected_stone_value)
+                    else:
+                        self.set_is_legal_move(False)
+                else:
                     self.perform_stone_insertion(selected_position_index, selected_stone_value)
             else:
-                self.perform_stone_insertion(selected_position_index, selected_stone_value)
+                self.set_is_legal_move(False)
+        else: 
+            self.set_is_legal_move(False)
 
     def position_selected(self, selected_position_index: int) -> None:
         local_player_color = self.local_player.get_color()
@@ -264,46 +304,40 @@ class Board:
             previous_move_position = self.get_last_opponent_move_position()
             previous_move_stone_value = self.get_last_opponent_move_stone_value()
             if previous_move_stone_value == 0:
-                print("inserção old stone")
                 previous_move_type = self.get_last_opponent_move_type()
                 if previous_move_type == MoveType.INSERT:
                     legal_positions = self.calculate_range_inserted_old_stone(previous_move_position)
-                    is_selected_position_valid = self.is_selected_position_valid(selected_position_index, legal_positions)
-                    if is_selected_position_valid:
-                        self.enter_in_stone_insertion_flux(selected_position_index)
+                    is_selected_position_legal = self.is_selected_position_legal(selected_position_index, legal_positions)
+                    if is_selected_position_legal:
+                        self.execute_stone_insertion(selected_position_index)
                     else:
-                        return
+                        self.set_is_legal_move(False)
                 else:
-                    print("remoção old stone")
                     legal_positions = self.calculate_range_removed_old_stone(previous_move_position, remote_player_color)
-                    is_selected_position_valid = self.is_selected_position_valid(selected_position_index, legal_positions)
-                    if is_selected_position_valid:
+                    is_selected_position_legal = self.is_selected_position_legal(selected_position_index, legal_positions)
+                    if is_selected_position_legal:
                         self.perform_stone_remotion(selected_position_index)
                     else:
-                        return
+                        self.set_is_legal_move(False)
             else:
-                legal_positions = self.calculate_range(previous_move_stone_value, previous_move_position)
-                is_selected_position_valid = self.is_selected_position_valid(selected_position_index, legal_positions)
-                if is_selected_position_valid:
-                    is_opponent_stone_in_selected_position = self.is_stone_of_given_color_in_selected_position(selected_position_index, remote_player_color)
-                    if not is_opponent_stone_in_selected_position:
-                        is_local_player_stone_in_selected_position = self.is_stone_of_given_color_in_selected_position(selected_position_index, local_player_color)
-                        if not is_local_player_stone_in_selected_position:
-                            self.enter_in_stone_insertion_flux(selected_position_index)
-                        else:
-                            self.perform_stone_remotion(selected_position_index)
+                legal_positions = self.calculate_range(previous_move_stone_value, previous_move_position, local_player_color)
+                is_selected_position_legal = self.is_selected_position_legal(selected_position_index, legal_positions)
+                if is_selected_position_legal:
+                    is_local_player_stone_in_selected_position = self.is_stone_of_given_color_in_selected_position(selected_position_index, local_player_color)
+                    if not is_local_player_stone_in_selected_position:
+                        self.execute_stone_insertion(selected_position_index)
                     else:
-                        return
+                        self.perform_stone_remotion(selected_position_index)
                 else:
-                    return
+                    self.set_is_legal_move(False)
         else:
-            self.enter_in_stone_insertion_flux(selected_position_index)
+            self.execute_stone_insertion(selected_position_index)
 
-        self.register_position_involved(selected_position_index)
+    def verify_game_over(self) -> None:
         self.local_player.toggle_turn()
-        valid_opponent_moves = self.calculate_valid_opponent_moves()
-        there_are_valid_opponent_moves = self.there_are_valid_opponent_moves(valid_opponent_moves)
-        if not there_are_valid_opponent_moves:
+        legal_opponent_moves = self.calculate_legal_opponent_moves()
+        there_are_legal_opponent_moves = self.there_are_legal_opponent_moves(legal_opponent_moves)
+        if not there_are_legal_opponent_moves:
             self.register_game_over(True)
             self.local_player.set_winner()
             self.set_game_state(GameState.GAME_OVER)
@@ -315,19 +349,18 @@ class Board:
     def insert_stone(self, stone: Stone, selected_position_index: int) -> None:
         self.triangles[selected_position_index].insert_stone(stone)
 
-    def remove_stone(self, selected_position_index: int) -> Stone:
+    def remove_stone_from_position(self, selected_position_index: int) -> Stone:
         removed_stone = self.triangles[selected_position_index].remove_stone()
         return removed_stone
 
     def get_stone_in_position(self, position: int) -> Stone:
-        print("position", position, ", stone:", self.triangles[position].get_stone(), "valor:", self.triangles[position].get_stone().get_value() if self.triangles[position].get_stone() is not None else "")
         return self.triangles[position].get_stone()
 
     def get_received_move_type(self, a_move: dict[str, str]) -> MoveType:
         return MoveType[a_move["move_type"]]
 
     def verify_if_is_game_over(self, a_move: dict[str, str]) -> bool:
-        if a_move["game_over"] == "True":
+        if a_move["match_status"] == "finished":
             return True
         else:
             return False
@@ -338,13 +371,12 @@ class Board:
             stone = self.remote_player.get_stone(int(a_move["stone_value"]), bool(a_move["in_left"]))
             self.remote_player.remove_stone(stone)
             self.insert_stone(stone, int(a_move["triangle_index"]))
-            self.update_last_opponent_move_info(int(a_move["stone_value"]), int(a_move["triangle_index"]), MoveType.INSERT)
+            self.set_last_opponent_move_info(int(a_move["stone_value"]), int(a_move["triangle_index"]), MoveType.INSERT)
         else:
-            stone = self.remove_stone(int(a_move["triangle_index"]))
-            print("stone na remoção:", stone)
+            stone = self.remove_stone_from_position(int(a_move["triangle_index"]))
             self.set_border_stone_info((stone, int(a_move["triangle_index"])))
-            self.remote_player.insert_stone(stone, bool(a_move["in_left"]))
-            self.update_last_opponent_move_info(int(a_move["stone_value"]), int(a_move["triangle_index"]), MoveType.REMOVE)
+            self.remote_player.insert_stone(stone, False)
+            self.set_last_opponent_move_info(int(a_move["stone_value"]), int(a_move["triangle_index"]), MoveType.REMOVE)
         is_game_over = self.verify_if_is_game_over(a_move)
         if is_game_over:
             self.remote_player.set_winner()
@@ -361,7 +393,6 @@ class Board:
         self.last_opponent_move_info = None
         self.selected_stone_info = None
         self.is_legal_move = None
-        self.move_type = None
         self.border_stone_info = None
         self.removed_stone = None
 
@@ -386,28 +417,17 @@ class Board:
         if local_player_starts:
             self.local_player.set_color(COLOR_A)
             self.remote_player.set_color(COLOR_B)
-            self.local_player.update(players[0][0], players[0][1])
-            self.remote_player.update(players[1][0], players[1][1])
             self.local_player.toggle_turn()
         else:
             self.local_player.set_color(COLOR_B)
             self.remote_player.set_color(COLOR_A)
-            self.local_player.update(players[0][0], players[0][1])
-            self.remote_player.update(players[1][0], players[1][1])
             self.remote_player.toggle_turn()
+
+        self.local_player.update(players[0][0], players[0][1])
+        self.remote_player.update(players[1][0], players[1][1])
 
     def get_game_state(self) -> GameState:
         return self.game_state
 
     def set_game_state(self, new_game_state: GameState) -> None:
         self.game_state = new_game_state
-
-    def get_turn_player(self) -> Player:
-        local_player_turn = self.local_player.get_turn()
-        if local_player_turn:
-            player = self.local_player
-        else:
-            player = self.remote_player
-        self.local_player.toggle_turn()
-        self.remote_player.toggle_turn()
-        return player

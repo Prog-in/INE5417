@@ -17,10 +17,8 @@ from ..utils.constants import (
     WINDOW_GEOMETRY,
     RESOURCES_DIR,
     FONT,
-    BOARD_WIDTH,
-    BOARD_HEIGHT,
     COLOR_A,
-    COLOR_B,
+    COLOR_B, ASSETS_INFO,
 )
 from ..utils.game_state import GameState
 from ..utils.theme import Theme
@@ -95,121 +93,27 @@ class PlayerInterface(DogPlayerInterface):
     def get_default_theme(self) -> Theme:
         return Theme.DEFAULT
 
+    # TODO: marcar como modelagem de algoritmo
     def load_assets(self) -> dict[str, tk.PhotoImage]:
         if self.theme == Theme.DEFAULT:
             assets_subdirectory = "default"
         else:
             assets_subdirectory = "alternative"
-        asset_dir_path = RESOURCES_DIR / assets_subdirectory
         assets = {}
 
-        menu_image_path = asset_dir_path / "menu_image.png"
-        menu_image = Image.open(menu_image_path).resize((WINDOW_WIDTH, WINDOW_HEIGHT))
-        resized_menu_image = ImageTk.PhotoImage(menu_image)
-        assets["menu_image"] = resized_menu_image
+        assets_bound = len(ASSETS_INFO)
+        for i in range(assets_bound):
+            image = Image.open(RESOURCES_DIR / assets_subdirectory / ASSETS_INFO[i][0])
+            resized_image = image.resize(ASSETS_INFO[i][1])
+            assets[ASSETS_INFO[i][0].removesuffix(".png")] = ImageTk.PhotoImage(resized_image)
 
-        menu_button_image_path = asset_dir_path / "menu_button.png"
-        menu_button_image = Image.open(menu_button_image_path).resize(
-            (int(WINDOW_WIDTH / 3.2), BOARD_HEIGHT // 7)
-        )
-        resized_menu_button_image = ImageTk.PhotoImage(menu_button_image)
-        assets["menu_button"] = resized_menu_button_image
-
-        board_image_path = asset_dir_path / "board.png"
-        board_image = Image.open(board_image_path).resize((BOARD_WIDTH, BOARD_HEIGHT))
-        resized_board_image = ImageTk.PhotoImage(board_image)
-        assets["board"] = resized_board_image
-
-        circle_image_path = asset_dir_path / "circle.png"
-        circle_image = Image.open(circle_image_path).resize(
-            (int(BOARD_WIDTH * 0.13), int(BOARD_HEIGHT * 0.13))
-        )
-        resized_circle_image = ImageTk.PhotoImage(circle_image)
-        assets["circle"] = resized_circle_image
-
-        stone_colora_0_image_path = asset_dir_path / (COLOR_A + "0.png")
-        stone_colora_0_image = Image.open(stone_colora_0_image_path).resize(
-            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
-        )
-        resized_stone_colora_0_image = ImageTk.PhotoImage(stone_colora_0_image)
-        assets[COLOR_A + "0"] = resized_stone_colora_0_image
-
-        stone_colora_1_image_path = asset_dir_path / (COLOR_A + "1.png")
-        stone_colora_1_image = Image.open(stone_colora_1_image_path).resize(
-            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
-        )
-        resized_stone_colora_1_image = ImageTk.PhotoImage(stone_colora_1_image)
-        assets[COLOR_A + "1"] = resized_stone_colora_1_image
-
-        stone_colora_2_image_path = asset_dir_path / (COLOR_A + "2.png")
-        stone_colora_2_image = Image.open(stone_colora_2_image_path).resize(
-            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
-        )
-        resized_stone_colora_2_image = ImageTk.PhotoImage(stone_colora_2_image)
-        assets[COLOR_A + "2"] = resized_stone_colora_2_image
-
-        stone_colora_3_image_path = asset_dir_path / (COLOR_A + "3.png")
-        stone_colora_3_image = Image.open(stone_colora_3_image_path).resize(
-            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
-        )
-        resized_stone_colora_3_image = ImageTk.PhotoImage(stone_colora_3_image)
-        assets[COLOR_A + "3"] = resized_stone_colora_3_image
-
-        stone_colora_4_image_path = asset_dir_path / (COLOR_A + "4.png")
-        stone_colora_4_image = Image.open(stone_colora_4_image_path).resize(
-            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
-        )
-        resized_stone_colora_4_image = ImageTk.PhotoImage(stone_colora_4_image)
-        assets[COLOR_A + "4"] = resized_stone_colora_4_image
-
-        stone_colora_5_image_path = asset_dir_path / (COLOR_A + "5.png")
-        stone_colora_5_image = Image.open(stone_colora_5_image_path).resize(
-            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
-        )
-        resized_stone_colora_5_image = ImageTk.PhotoImage(stone_colora_5_image)
-        assets[COLOR_A + "5"] = resized_stone_colora_5_image
-
-        stone_colorb_0_image_path = asset_dir_path / (COLOR_B + "0.png")
-        stone_colorb_0_image = Image.open(stone_colorb_0_image_path).resize(
-            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
-        )
-        resized_stone_colorb_0_image = ImageTk.PhotoImage(stone_colorb_0_image)
-        assets[COLOR_B + "0"] = resized_stone_colorb_0_image
-
-        stone_colorb_1_image_path = asset_dir_path / (COLOR_B + "1.png")
-        stone_colorb_1_image = Image.open(stone_colorb_1_image_path).resize(
-            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
-        )
-        resized_stone_colorb_1_image = ImageTk.PhotoImage(stone_colorb_1_image)
-        assets[COLOR_B + "1"] = resized_stone_colorb_1_image
-
-        stone_colorb_2_image_path = asset_dir_path / (COLOR_B + "2.png")
-        stone_colorb_2_image = Image.open(stone_colorb_2_image_path).resize(
-            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
-        )
-        resized_stone_colorb_2_image = ImageTk.PhotoImage(stone_colorb_2_image)
-        assets[COLOR_B + "2"] = resized_stone_colorb_2_image
-
-        stone_colorb_3_image_path = asset_dir_path / (COLOR_B + "3.png")
-        stone_colorb_3_image = Image.open(stone_colorb_3_image_path).resize(
-            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
-        )
-        resized_stone_colorb_3_image = ImageTk.PhotoImage(stone_colorb_3_image)
-        assets[COLOR_B + "3"] = resized_stone_colorb_3_image
-
-        stone_colorb_4_image_path = asset_dir_path / (COLOR_B + "4.png")
-        stone_colorb_4_image = Image.open(stone_colorb_4_image_path).resize(
-            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
-        )
-        resized_stone_colorb_4_image = ImageTk.PhotoImage(stone_colorb_4_image)
-        assets[COLOR_B + "4"] = resized_stone_colorb_4_image
-
-        stone_colorb_5_image_path = asset_dir_path / (COLOR_B + "5.png")
-        stone_colorb_5_image = Image.open(stone_colorb_5_image_path).resize(
-            (int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07))
-        )
-        resized_stone_colorb_5_image = ImageTk.PhotoImage(stone_colorb_5_image)
-        assets[COLOR_B + "5"] = resized_stone_colorb_5_image
+        colors = [COLOR_A, COLOR_B]
+        colors_bound = len(colors)
+        for i in range(colors_bound):
+            for j in range(6):
+                stone_image = Image.open(RESOURCES_DIR / assets_subdirectory / (colors[i]  + str(j) + ".png"))
+                resized_stone_image = stone_image.resize((int(WINDOW_WIDTH * 0.07), int(WINDOW_HEIGHT * 0.07)))
+                assets[colors[i] + str(j)] = ImageTk.PhotoImage(resized_stone_image)
 
         return assets
 
@@ -223,18 +127,20 @@ class PlayerInterface(DogPlayerInterface):
         self.theme = new_theme
 
     def switch_theme(self) -> None:
-        theme = self.get_theme()
-        if theme == Theme.DEFAULT:
-            self.set_theme(Theme.ALTERNATIVE)
-        else:
-            self.set_theme(Theme.DEFAULT)
-        self.assets = self.load_assets()
-        # TODO: mudar apenas no menu principal (difícil implementar essa mudança durante a partida)
-        self.main_menu_interface.update_widgets_images(self.assets)
-        self.game_interface.update_widgets_images(self.assets)
+        game_state = self.game_interface.get_game_state()
+        if game_state == GameState.MAIN_MENU:
+            theme = self.get_theme()
+            if theme == Theme.DEFAULT:
+                self.set_theme(Theme.ALTERNATIVE)
+            else:
+                self.set_theme(Theme.DEFAULT)
+            self.assets = self.load_assets()
+            self.main_menu_interface.update_widgets_images(self.assets)
+            self.game_interface.update_widgets_images(self.assets)
 
     def populate_window(self) -> None:
-        menubar = self.menu.nametowidget(self.menu.winfo_parent())
+        parent_name = self.menu.winfo_parent()
+        menubar = self.menu.nametowidget(parent_name)
         self.root.config(menu=menubar)
         self.message_label.pack(fill=tk.X, side=tk.BOTTOM, expand=False)
 
@@ -255,13 +161,11 @@ class PlayerInterface(DogPlayerInterface):
 
     def receive_start(self, start_status: StartStatus) -> None:
         game_state = self.game_interface.get_game_state()
-        print("received start")
         if game_state == GameState.MAIN_MENU:
             self.perform_match_start(start_status, GameState.REMOTE_PLAYER_TO_MOVE)
             messagebox.showinfo(message="Partida iniciada!")
 
     def receive_move(self, a_move: dict[str, str]) -> None:
-        print("received move:", a_move)
         game_state = self.game_interface.get_game_state()
         if game_state == GameState.REMOTE_PLAYER_TO_MOVE:
             self.game_interface.receive_move(a_move)
@@ -327,14 +231,17 @@ class PlayerInterface(DogPlayerInterface):
             case GameState.REMOTE_PLAYER_TO_MOVE:
                 message += "Espere o outro jogador jogar"
             case GameState.GAME_OVER:
-                message += "Partida encerrada"
+                message += "Partida encerrada: "
+                is_local_player_winner = self.game_interface.is_local_player_winner()
+                if is_local_player_winner:
+                    message += "Jogador local venceu"
+                else:
+                    message += "Jogador remoto venceu"
             case GameState.ABANDONED_BY_OTHER_PLAYER:
                 message += "Partida abandonada pelo outro jogador"
         self.message_label.configure(text=message)
         self.message_label.update()
 
-        print("update: game_state =", game_state)
-        # atualizando os estados dos botões da barra de menu
         if (
             game_state == GameState.GAME_OVER
             or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
@@ -343,21 +250,13 @@ class PlayerInterface(DogPlayerInterface):
         else:
             self.menu.entryconfigure(1, state=tk.DISABLED)
 
-        if (
-            game_state == GameState.LOCAL_PLAYER_TO_MOVE
-            or game_state == GameState.REMOTE_PLAYER_TO_MOVE
-        ):
+        if game_state == GameState.MAIN_MENU:
             self.menu.entryconfigure(2, state=tk.NORMAL)
-        else:
-            self.menu.entryconfigure(2, state=tk.DISABLED)
-
-        if (
-                game_state == GameState.GAME_OVER
-                or game_state == GameState.ABANDONED_BY_OTHER_PLAYER
-        ):
             self.menu.entryconfigure(4, state=tk.NORMAL)
         else:
+            self.menu.entryconfigure(2, state=tk.DISABLED)
             self.menu.entryconfigure(4, state=tk.DISABLED)
+
         self.menu.update()
 
     def exit_game(self) -> None:
