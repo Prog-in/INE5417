@@ -237,7 +237,7 @@ class Board:
         self.set_removed_stone(removed_stone)
         print("fluxo remoção: info pedra na borda:", self.border_stone_info)
 
-    def enter_in_stone_insertion_flux(self, selected_position_index: int) -> None:
+    def execute_stone_insertion(self, selected_position_index: int) -> None:
         user_already_selected_a_stone = self.user_already_selected_a_stone()
         if user_already_selected_a_stone:
             selected_stone = self.get_selected_stone()
@@ -269,7 +269,7 @@ class Board:
                     legal_positions = self.calculate_range_inserted_old_stone(previous_move_position)
                     is_selected_position_valid = self.is_selected_position_valid(selected_position_index, legal_positions)
                     if is_selected_position_valid:
-                        self.enter_in_stone_insertion_flux(selected_position_index)
+                        self.execute_stone_insertion(selected_position_index)
                     else:
                         return
                 else:
@@ -288,7 +288,7 @@ class Board:
                     if not is_opponent_stone_in_selected_position:
                         is_local_player_stone_in_selected_position = self.is_stone_of_given_color_in_selected_position(selected_position_index, local_player_color)
                         if not is_local_player_stone_in_selected_position:
-                            self.enter_in_stone_insertion_flux(selected_position_index)
+                            self.execute_stone_insertion(selected_position_index)
                         else:
                             self.perform_stone_remotion(selected_position_index)
                     else:
@@ -296,7 +296,7 @@ class Board:
                 else:
                     return
         else:
-            self.enter_in_stone_insertion_flux(selected_position_index)
+            self.execute_stone_insertion(selected_position_index)
 
         self.register_position_involved(selected_position_index)
         self.local_player.toggle_turn()
