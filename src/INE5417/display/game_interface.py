@@ -63,8 +63,8 @@ class GameInterface:
                                         stone, index, in_left))
             self.stone_buttons[player_color + str(i) + ".1"] = button_stone_1
             self.stone_buttons[player_color + str(i) + ".2"] = button_stone_2
-            button_stone_1.grid(row=i + 1, column=0, padx=0, pady=0)
-            button_stone_2.grid(row=i + 1, column=1, padx=0, pady=0)
+            button_stone_1.grid(row=i, column=0, padx=0, pady=0)
+            button_stone_2.grid(row=i, column=1, padx=0, pady=0)
 
         return player_stones_frame
 
@@ -218,11 +218,12 @@ class GameInterface:
     def position_selected(self, position_id: int) -> None:
         game_state = self.get_game_state()
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
-            self.set_pressed_button(None)
             self.board.position_selected(position_id)
             game_state = self.get_game_state()
             if game_state == GameState.GAME_OVER or game_state == GameState.REMOTE_PLAYER_TO_MOVE:
                 self.board.set_is_legal_move(True)
+                self.pressed_button.configure(background="#d9d9d9")
+                self.set_pressed_button(None)
                 move_to_send = self.board.get_move_to_send()
                 # TODO: ler mais sobre "match_status" no DOG
                 move_to_send["match_status"] = "next"
