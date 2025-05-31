@@ -361,4 +361,6 @@ class PlayerInterface(DogPlayerInterface):
         self.menu.update()
 
     def exit_game(self) -> None:
-        sys.exit(0)
+        game_state = self.game_interface.get_game_state()
+        if game_state == GameState.MAIN_MENU:
+            sys.exit(0)
