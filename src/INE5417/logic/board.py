@@ -92,9 +92,8 @@ class Board:
                 break
         return valid_positions
 
-    def update_last_opponent_move_info(self, stone_value_involved: int, position_involved: int, move_type: MoveType) -> None:
+    def set_last_opponent_move_info(self, stone_value_involved: int, position_involved: int, move_type: MoveType) -> None:
         self.last_opponent_move_info = (stone_value_involved, position_involved, move_type)
-        self.set_selected_stone_info(None)
 
     def get_last_opponent_move_type(self) -> MoveType:
         return self.last_opponent_move_info[2]
@@ -338,13 +337,13 @@ class Board:
             stone = self.remote_player.get_stone(int(a_move["stone_value"]), bool(a_move["in_left"]))
             self.remote_player.remove_stone(stone)
             self.insert_stone(stone, int(a_move["triangle_index"]))
-            self.update_last_opponent_move_info(int(a_move["stone_value"]), int(a_move["triangle_index"]), MoveType.INSERT)
+            self.set_last_opponent_move_info(int(a_move["stone_value"]), int(a_move["triangle_index"]), MoveType.INSERT)
         else:
             stone = self.remove_stone(int(a_move["triangle_index"]))
             print("stone na remoção:", stone)
             self.set_border_stone_info((stone, int(a_move["triangle_index"])))
             self.remote_player.insert_stone(stone, bool(a_move["in_left"]))
-            self.update_last_opponent_move_info(int(a_move["stone_value"]), int(a_move["triangle_index"]), MoveType.REMOVE)
+            self.set_last_opponent_move_info(int(a_move["stone_value"]), int(a_move["triangle_index"]), MoveType.REMOVE)
         is_game_over = self.verify_if_is_game_over(a_move)
         if is_game_over:
             self.remote_player.set_winner()
