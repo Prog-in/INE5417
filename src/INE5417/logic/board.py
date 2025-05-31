@@ -50,12 +50,22 @@ class Board:
         return self.remote_player.get_color()
 
     def calculate_range(
-        self, previous_move_stone_value: int, previous_move_position: int
+        self, previous_move_stone_value: int, previous_move_position: int, player_color: str
     ) -> set[Triangle]:
-        return {
+        legal_positions = set()
+        possible_triangles = {
             self.triangles[(previous_move_position - previous_move_stone_value) % 12],
             self.triangles[(previous_move_position + previous_move_stone_value) % 12],
         }
+        for triangle in possible_triangles:
+            if triangle.is_free():
+                legal_positions.add(triangle)
+            else:
+                stone = triangle.get_stone()
+                stone_color = stone.get_color()
+                if stone_color == player_color:
+                    legal_positions.add(triangle)
+        return legal_positions
 
     def calculate_range_removed_old_stone(
         self, previous_move_position: int, old_stone_color: str
@@ -188,7 +198,9 @@ class Board:
             return False
 
     def calculate_legal_opponent_moves(self) -> set[Triangle]:
-        stone_color_involved = self.local_player.get_color()
+        local_player_color = self.local_player.get_color()
+        remote_player_color = self.remote_player.get_color()
+
         stone_value_involved = self.get_last_local_player_move_stone_value()
         move_type_involved = self.get_last_local_player_move_type()
         move_position_involved = self.get_last_local_player_move_position()
@@ -196,9 +208,9 @@ class Board:
             if move_type_involved == MoveType.INSERT:
                 return self.calculate_range_inserted_old_stone(move_position_involved)
             else:
-                return self.calculate_range_removed_old_stone(move_position_involved, stone_color_involved)
+                return self.calculate_range_removed_old_stone(move_position_involved, local_player_color)
         else:
-            return self.calculate_range(stone_value_involved, move_position_involved)
+            return self.calculate_range(stone_value_involved, move_position_involved, remote_player_color)
 
     def there_are_legal_opponent_moves(self, legal_opponent_moves: set[Triangle]) -> bool:
         if len(legal_opponent_moves) == 0:
@@ -286,18 +298,14 @@ class Board:
                     else:
                         return
             else:
-                legal_positions = self.calculate_range(previous_move_stone_value, previous_move_position)
+                legal_positions = self.calculate_range(previous_move_stone_value, previous_move_position, local_player_color)
                 is_selected_position_legal = self.is_selected_position_legal(selected_position_index, legal_positions)
                 if is_selected_position_legal:
-                    is_opponent_stone_in_selected_position = self.is_stone_of_given_color_in_selected_position(selected_position_index, remote_player_color)
-                    if not is_opponent_stone_in_selected_position:
-                        is_local_player_stone_in_selected_position = self.is_stone_of_given_color_in_selected_position(selected_position_index, local_player_color)
-                        if not is_local_player_stone_in_selected_position:
-                            self.execute_stone_insertion(selected_position_index)
-                        else:
-                            self.perform_stone_remotion(selected_position_index)
+                    is_local_player_stone_in_selected_position = self.is_stone_of_given_color_in_selected_position(selected_position_index, local_player_color)
+                    if not is_local_player_stone_in_selected_position:
+                        self.execute_stone_insertion(selected_position_index)
                     else:
-                        return
+                        self.perform_stone_remotion(selected_position_index)
                 else:
                     return
         else:
