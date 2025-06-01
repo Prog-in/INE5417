@@ -51,20 +51,23 @@ class Board:
     def calculate_range(
         self, previous_move_stone_value: int, previous_move_position: int, player_color: str
     ) -> set[Triangle]:
-        legal_positions = set()
+        legal_positions_set = set()
         possible_triangles = {
             self.triangles[(previous_move_position - previous_move_stone_value) % 12],
             self.triangles[(previous_move_position + previous_move_stone_value) % 12],
         }
-        for triangle in possible_triangles:
+        legal_positions_list = list(possible_triangles)
+        list_length = len(legal_positions_list)
+        for i in range(list_length):
+            triangle = legal_positions_list[i]
             if triangle.is_free():
-                legal_positions.add(triangle)
+                legal_positions_set.add(triangle)
             else:
                 stone = triangle.get_stone()
                 stone_color = stone.get_color()
                 if stone_color == player_color:
-                    legal_positions.add(triangle)
-        return legal_positions
+                    legal_positions_set.add(triangle)
+        return legal_positions_set
 
     def calculate_range_removed_old_stone(
         self, previous_move_position: int, old_stone_color: str
@@ -82,7 +85,7 @@ class Board:
                     if stone_color != old_stone_color:
                         legal_positions.add(triangle)
             if len(legal_positions) > 0:
-                break
+                return legal_positions
         return legal_positions
 
     def calculate_range_inserted_old_stone(
@@ -98,7 +101,7 @@ class Board:
                 if triangle.is_free():
                     legal_positions.add(triangle)
             if len(legal_positions) > 0:
-                break
+                return legal_positions
         return legal_positions
 
     def set_last_opponent_move_info(self, stone_value_involved: int, position_involved: int, move_type: MoveType) -> None:

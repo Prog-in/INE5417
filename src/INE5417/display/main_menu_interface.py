@@ -17,6 +17,9 @@ class MainMenuInterface:
     def get_frame(self) -> ttk.Frame:
         return self.frame
 
+    def set_assets(self, assets: dict[str, tk.PhotoImage]) -> None:
+        self.assets = assets
+
     def initialize_frame(self) -> None:
         self.frame = ttk.Frame(self.root)
 
@@ -54,6 +57,6 @@ class MainMenuInterface:
         self.player_interface.start_match()
 
     def update_widgets_images(self, assets: dict[str, tk.PhotoImage]) -> None:
-        self.assets = assets
+        self.set_assets(assets)
         self.menu_canvas.itemconfig("menu_image", image=self.assets["menu_image"])
         self.menu_canvas.itemconfig("menu_button", image=self.assets["menu_button"])

@@ -18,6 +18,7 @@ class Player:
         self.name = ""
         self.turn = False
         self.winner = False
+        self.color = None
         self.stones = []
         for i in range(6):
             self.stones.append([Stone(i), Stone(i)])

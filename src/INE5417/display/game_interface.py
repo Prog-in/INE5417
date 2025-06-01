@@ -31,6 +31,9 @@ class GameInterface:
     def set_game_state(self, new_game_state: GameState) -> None:
         self.board.set_game_state(new_game_state)
 
+    def set_assets(self, assets: dict[str, tk.PhotoImage]) -> None:
+        self.assets = assets
+
     def initialize_player_stone_frame(
             self, player_color: str, parent_widget: tk.Widget, is_local: bool, text: str
     ) -> ttk.Frame:
@@ -149,7 +152,7 @@ class GameInterface:
         self.board.receive_move(a_move)
 
     def update_widgets_images(self, assets: dict[str, tk.PhotoImage]) -> None:
-        self.assets = assets
+        self.set_assets(assets)
         if self.frame is not None:
             for button_name, stone_button in self.stone_buttons.items():
                 asset_name = button_name[:-2]
