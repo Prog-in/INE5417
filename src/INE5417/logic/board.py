@@ -398,15 +398,14 @@ class Board:
         if local_player_starts:
             self.local_player.set_color(COLOR_A)
             self.remote_player.set_color(COLOR_B)
-            self.local_player.update(players[0][0], players[0][1])
-            self.remote_player.update(players[1][0], players[1][1])
             self.local_player.toggle_turn()
         else:
             self.local_player.set_color(COLOR_B)
             self.remote_player.set_color(COLOR_A)
-            self.local_player.update(players[0][0], players[0][1])
-            self.remote_player.update(players[1][0], players[1][1])
             self.remote_player.toggle_turn()
+
+        self.local_player.update(players[0][0], players[0][1])
+        self.remote_player.update(players[1][0], players[1][1])
 
     def get_game_state(self) -> GameState:
         return self.game_state
