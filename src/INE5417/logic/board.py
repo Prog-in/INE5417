@@ -303,7 +303,7 @@ class Board:
                     return
         else:
             self.execute_stone_insertion(selected_position_index)
-
+        # TODO: executar essa parte apenas se houve uma inserção ou remoção (inserir a lógica de jogada válida aqui)
         self.register_position_involved(selected_position_index)
         self.local_player.toggle_turn()
         legal_opponent_moves = self.calculate_legal_opponent_moves()
