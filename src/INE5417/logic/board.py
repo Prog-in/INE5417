@@ -17,7 +17,6 @@ class Board:
         self.border_stone_info: tuple[Stone, int] | None = None
         self.removed_stone: Stone | None = None
         self.move_to_send: dict[str, str] = {}
-        self.move_type: MoveType | None = None
         self.triangles: list[Triangle] = []
         for i in range(12):
             self.triangles.append(Triangle(i))
@@ -134,7 +133,7 @@ class Board:
             return True
 
     def is_first_local_player_move(self) -> bool:
-        if self.move_type is None:
+        if self.move_to_send == {}:
             return True
         else:
             return False
@@ -217,12 +216,6 @@ class Board:
             return False
         else:
             return True
-
-    def set_move_type(self, move_type: MoveType) -> None:
-        self.move_type = move_type
-
-    def get_move_type(self) -> MoveType:
-        return self.move_type
 
     def perform_stone_insertion(self, selected_position_index: int, selected_stone_value: int) -> None:
         self.reset_move_signature()
@@ -373,7 +366,6 @@ class Board:
         self.last_opponent_move_info = None
         self.selected_stone_info = None
         self.is_legal_move = None
-        self.move_type = None
         self.border_stone_info = None
         self.removed_stone = None
 
@@ -412,13 +404,3 @@ class Board:
 
     def set_game_state(self, new_game_state: GameState) -> None:
         self.game_state = new_game_state
-
-    def get_turn_player(self) -> Player:
-        local_player_turn = self.local_player.get_turn()
-        if local_player_turn:
-            player = self.local_player
-        else:
-            player = self.remote_player
-        self.local_player.toggle_turn()
-        self.remote_player.toggle_turn()
-        return player
