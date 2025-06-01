@@ -235,7 +235,8 @@ class PlayerInterface(DogPlayerInterface):
             self.game_interface.update_widgets_images(self.assets)
 
     def populate_window(self) -> None:
-        menubar = self.menu.nametowidget(self.menu.winfo_parent())
+        parent_name = self.menu.winfo_parent()
+        menubar = self.menu.nametowidget(parent_name)
         self.root.config(menu=menubar)
         self.message_label.pack(fill=tk.X, side=tk.BOTTOM, expand=False)
 
