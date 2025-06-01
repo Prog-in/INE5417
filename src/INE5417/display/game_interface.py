@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from ..logic.board import Board
-from ..logic.player import Player
 from ..utils.constants import BOARD_WIDTH, BOARD_HEIGHT
 from ..utils.game_state import GameState
 from ..utils.move_type import MoveType
@@ -151,13 +150,14 @@ class GameInterface:
 
     def update_widgets_images(self, assets: dict[str, tk.PhotoImage]) -> None:
         self.assets = assets
-        for button_name, stone_button in self.stone_buttons.items():
-            asset_name = button_name[:-2]
-            stone_button.configure(image=self.assets[asset_name])
-            stone_button.update()
-        for i in range(12):
-            self.canvas_board.itemconfig("circle" + str(i), image=self.assets["circle"])
-        self.canvas_board.itemconfig("board", image=self.assets["board"])
+        if self.frame is not None:
+            for button_name, stone_button in self.stone_buttons.items():
+                asset_name = button_name[:-2]
+                stone_button.configure(image=self.assets[asset_name])
+                stone_button.update()
+            for i in range(12):
+                self.canvas_board.itemconfig("circle" + str(i), image=self.assets["circle"])
+            self.canvas_board.itemconfig("board", image=self.assets["board"])
 
     def get_leftmost_stone_button(self, stone_color: str, stone_value: int) -> ttk.Button:
         return self.stone_buttons[stone_color + str(stone_value) + ".1"]

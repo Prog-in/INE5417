@@ -223,15 +223,16 @@ class PlayerInterface(DogPlayerInterface):
         self.theme = new_theme
 
     def switch_theme(self) -> None:
-        theme = self.get_theme()
-        if theme == Theme.DEFAULT:
-            self.set_theme(Theme.ALTERNATIVE)
-        else:
-            self.set_theme(Theme.DEFAULT)
-        self.assets = self.load_assets()
-        # TODO: mudar apenas no menu principal (difícil implementar essa mudança durante a partida)
-        self.main_menu_interface.update_widgets_images(self.assets)
-        self.game_interface.update_widgets_images(self.assets)
+        game_state = self.game_interface.get_game_state()
+        if game_state == GameState.MAIN_MENU:
+            theme = self.get_theme()
+            if theme == Theme.DEFAULT:
+                self.set_theme(Theme.ALTERNATIVE)
+            else:
+                self.set_theme(Theme.DEFAULT)
+            self.assets = self.load_assets()
+            self.main_menu_interface.update_widgets_images(self.assets)
+            self.game_interface.update_widgets_images(self.assets)
 
     def populate_window(self) -> None:
         menubar = self.menu.nametowidget(self.menu.winfo_parent())
@@ -343,10 +344,7 @@ class PlayerInterface(DogPlayerInterface):
         else:
             self.menu.entryconfigure(1, state=tk.DISABLED)
 
-        if (
-            game_state == GameState.LOCAL_PLAYER_TO_MOVE
-            or game_state == GameState.REMOTE_PLAYER_TO_MOVE
-        ):
+        if game_state == GameState.MAIN_MENU:
             self.menu.entryconfigure(2, state=tk.NORMAL)
         else:
             self.menu.entryconfigure(2, state=tk.DISABLED)
