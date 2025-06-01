@@ -180,13 +180,14 @@ class Board:
     def is_selected_position_legal(
         self, selected_position_index: int, legal_positions: set[Triangle]
     ) -> bool:
-        is_legal = False
-        for legal_position in legal_positions:
+        legal_positions_list = list(legal_positions)
+        list_length = len(legal_positions_list)
+        for i in range(list_length):
+            legal_position = legal_positions_list[i]
             position_index = legal_position.get_index()
             if selected_position_index == position_index:
-                is_legal = True
-                break
-        return is_legal
+                return True
+        return False
 
     def is_stone_of_given_color_in_selected_position(self, selected_position_index: int, color: str) -> bool:
         stone_in_triangle = self.get_stone_in_position(selected_position_index)
