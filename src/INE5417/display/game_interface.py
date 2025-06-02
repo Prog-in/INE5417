@@ -218,6 +218,9 @@ class GameInterface:
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
             self.board.stone_selected(stone_value, in_left)
 
+    def set_match_status_in_move_to_send(self, move_to_send: dict[str, str], match_status: str) -> None:
+        move_to_send["match_status"] = match_status
+
     def position_selected(self, position_id: int) -> None:
         game_state = self.get_game_state()
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
@@ -229,7 +232,7 @@ class GameInterface:
                 self.set_pressed_button(None)
                 move_to_send = self.board.get_move_to_send()
                 # TODO: ler mais sobre "match_status" no DOG
-                move_to_send["match_status"] = "next"
+                self.set_match_status_in_move_to_send(move_to_send, "next")
                 self.update_board(move_to_send, True)
                 self.player_interface.send_move(move_to_send)
                 self.player_interface.update_gui()
