@@ -145,7 +145,8 @@ class GameInterface:
         self.board.start_match(players)
 
     def receive_move(self, a_move: dict[str, str]) -> None:
-        if self.board.is_stone_in_border():
+        is_stone_in_border = self.board.is_stone_in_border()
+        if is_stone_in_border:
             position = self.board.get_stone_in_border_position()
             self.canvas_board.itemconfig(f"circle{position}", state=tk.NORMAL, image=self.assets["circle"])
             self.canvas_board.itemconfig(f"border{position}", state=tk.HIDDEN)
@@ -189,10 +190,11 @@ class GameInterface:
             collection = self.local_player_buttons_of_stones_in_board
         else:
             collection = self.remote_player_buttons_of_stones_in_board
-        for info in collection:
-            if info[0] == stone_button_value:
-                collection.remove(info)
-                return info[1]
+        bound = len(collection)
+        for i in range(bound):
+            if collection[i][0] == stone_button_value:
+                collection.remove(collection[i])
+                return collection[i][1]
 
     def update_stone_state(
             self, stone_color: str, stone_value: int, in_left: bool, state: str
@@ -209,8 +211,15 @@ class GameInterface:
     def set_pressed_button(self, button: tk.Button | None) -> None:
         self.pressed_button = button
 
-    def stone_selected(self, pressed_button: ttk.Button, stone_value: int, in_left: bool) -> None:
+    def was_a_stone_button_pressed(self) -> bool:
         if self.pressed_button is not None:
+            return True
+        else:
+            return False
+
+    def stone_selected(self, pressed_button: ttk.Button, stone_value: int, in_left: bool) -> None:
+        was_a_stone_button_pressed = self.was_a_stone_button_pressed()
+        if was_a_stone_button_pressed:
             self.pressed_button.configure(background="#d9d9d9")
         self.set_pressed_button(pressed_button)
         self.pressed_button.configure(background="yellow")
