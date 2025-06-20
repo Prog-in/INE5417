@@ -26,7 +26,13 @@ Para executar o programa, deve-se primeiro instalar as dependências necessária
 pip install -r requirements.txt
 ```
 
-Após isso, para iniciar o programa, deve-se utilizar o comando
+Após isso, deve-se gerar um id do jogo rodando o seguinte código:
+
+```bash
+python3 src/INE5417/config/generate_game_id.py
+```
+
+Por fim, para iniciar o programa, deve-se utilizar o comando
 
 ```bash
 python3 src/main.py
