@@ -18,8 +18,12 @@ class Board:
         self.removed_stone: Stone | None = None
         self.move_to_send: dict[str, str] = {}
         self.triangles: list[Triangle] = []
+        self.populate_triangles()
+
+    def populate_triangles(self) -> None:
         for i in range(12):
-            self.triangles.append(Triangle(i))
+            new_triangle = Triangle(i)
+            self.triangles.append(new_triangle)
 
     def get_selected_stone(self) -> Stone | None:
         return self.selected_stone_info[0]
@@ -100,7 +104,8 @@ class Board:
                 self.triangles[(previous_move_position - i) % 12],
                 self.triangles[(previous_move_position + i) % 12]
             ]
-            for triangle in possible_triangles:
+            for j in range(2):
+                triangle = possible_triangles[j]
                 if triangle.is_free():
                     legal_positions.add(triangle)
             if len(legal_positions) > 0:
@@ -158,13 +163,6 @@ class Board:
 
     def register_in_left(self, in_left: bool) -> None:
         self.move_to_send["in_left"] = str(in_left)
-
-    # TODO: marcar como modelagem de algoritmo
-    def register_game_over(self, is_game_over: bool) -> None:
-        if is_game_over:
-            self.move_to_send["match_status"] = "finished"
-        else:
-            self.move_to_send["match_status"] = "next"
 
     def get_last_local_player_move_type(self) -> MoveType:
         return MoveType[self.move_to_send["move_type"]]
@@ -262,7 +260,6 @@ class Board:
         self.set_removed_stone(removed_stone)
         self.set_is_legal_move(True)
 
-    # TODO: fazer modelagem de algoritmo
     def get_number_of_stones_on_board_with_value(self, selected_stone_value: int) -> int:
         counter = 0
         for i in range(12):
@@ -333,16 +330,16 @@ class Board:
         else:
             self.execute_stone_insertion(selected_position_index)
 
-    def verify_game_over(self) -> None:
+    def perform_game_over_verification(self) -> None:
         self.local_player.toggle_turn()
         legal_opponent_moves = self.calculate_legal_opponent_moves()
         there_are_legal_opponent_moves = self.there_are_legal_opponent_moves(legal_opponent_moves)
         if not there_are_legal_opponent_moves:
-            self.register_game_over(True)
+            self.move_to_send["match_status"] = "finished"
             self.local_player.set_winner()
             self.set_game_state(GameState.GAME_OVER)
         else:
-            self.register_game_over(False)
+            self.move_to_send["match_status"] = "next"
             self.remote_player.toggle_turn()
             self.set_game_state(GameState.REMOTE_PLAYER_TO_MOVE)
 

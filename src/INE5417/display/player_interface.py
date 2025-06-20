@@ -1,6 +1,6 @@
 import sys
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, simpledialog
 from tkinter import ttk
 
 from PIL import ImageTk, Image
@@ -44,8 +44,7 @@ class PlayerInterface(DogPlayerInterface):
         self.set_main_frame(main_menu_frame)
         self.main_frame.pack(fill=tk.BOTH, side=tk.TOP, anchor=tk.CENTER, expand=True)
 
-        # self.player_name: str = simpledialog.askstring(prompt="Nome do jogador")
-        self.player_name: str = ""
+        self.player_name: str = simpledialog.askstring(prompt="Nome do jogador", title="")
         self.dog: DogActor = DogActor()
         message = self.dog.initialize(self.player_name, self)
         messagebox.showinfo(message=message)
@@ -93,7 +92,6 @@ class PlayerInterface(DogPlayerInterface):
     def get_default_theme(self) -> Theme:
         return Theme.DEFAULT
 
-    # TODO: marcar como modelagem de algoritmo
     def load_assets(self) -> dict[str, tk.PhotoImage]:
         if self.theme == Theme.DEFAULT:
             assets_subdirectory = "default"
@@ -221,7 +219,6 @@ class PlayerInterface(DogPlayerInterface):
     def update_gui(self) -> None:
         game_state = self.game_interface.get_game_state()
 
-        # Atualizando o label de mensagens
         message = GAME_NAME + ": "
         match game_state:
             case GameState.MAIN_MENU:
