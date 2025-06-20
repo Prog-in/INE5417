@@ -9,8 +9,7 @@ class Player:
         self.winner: bool = False
         self.color: str | None = None
         self.stones: list[list[Stone]] = []
-        for i in range(6):
-            self.stones.append([Stone(i), Stone(i)])
+        self.populate_stone_list()
 
     def reset(self) -> None:
         self.id = ""
@@ -19,8 +18,13 @@ class Player:
         self.winner = False
         self.color = None
         self.stones = []
+        self.populate_stone_list()
+
+    def populate_stone_list(self) -> None:
         for i in range(6):
-            self.stones.append([Stone(i), Stone(i)])
+            left_stone = Stone(i)
+            right_stone = Stone(i)
+            self.stones.append([left_stone, right_stone])
 
     def update(self, player_name: str, player_id: str) -> None:
         for i in range(6):
