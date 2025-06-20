@@ -333,7 +333,7 @@ class Board:
         else:
             self.execute_stone_insertion(selected_position_index)
 
-    def verify_game_over(self) -> None:
+    def perform_game_over_verification(self) -> None:
         self.local_player.toggle_turn()
         legal_opponent_moves = self.calculate_legal_opponent_moves()
         there_are_legal_opponent_moves = self.there_are_legal_opponent_moves(legal_opponent_moves)

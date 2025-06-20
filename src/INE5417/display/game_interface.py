@@ -210,23 +210,32 @@ class GameInterface:
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
             self.board.stone_selected(stone_value, in_left)
 
+    def verify_game_over(self) -> bool:
+        is_legal_move = self.board.get_is_legal_move()
+        if is_legal_move:
+            # TODO: fazer diagrama de algoritmo
+            self.board.perform_game_over_verification()
+            was_a_stone_button_pressed = self.was_a_stone_button_pressed()
+            if was_a_stone_button_pressed:
+                self.pressed_button.configure(background="#d9d9d9")
+                self.set_pressed_button(None)
+            return True
+        else:
+            return False
+
     def position_selected(self, position_id: int) -> None:
         game_state = self.get_game_state()
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
             self.board.position_selected(position_id)
-            is_legal_move = self.board.get_is_legal_move()
-            if is_legal_move:
-                self.board.verify_game_over()
-                was_a_stone_button_pressed = self.was_a_stone_button_pressed()
-                if was_a_stone_button_pressed:
-                    self.pressed_button.configure(background="#d9d9d9")
-                    self.set_pressed_button(None)
-                move_to_send = self.board.get_move_to_send()
-                self.update_board(move_to_send, True)
-                self.player_interface.send_move(move_to_send)
-                self.player_interface.update_gui()
-            else:
-                messagebox.showinfo(message="Jogada inválida. Tente novamente")
+        # TODO: fazer diagrama de algoritmo
+        game_over = self.verify_game_over()
+        if game_over:
+            move_to_send = self.board.get_move_to_send()
+            self.update_board(move_to_send, True)
+            self.player_interface.send_move(move_to_send)
+            self.player_interface.update_gui()
+        else:
+            messagebox.showinfo(message="Jogada inválida. Tente novamente")
 
     def get_move_type_from_move(self, move: dict[str, str]) -> MoveType:
         return MoveType[move["move_type"]]
