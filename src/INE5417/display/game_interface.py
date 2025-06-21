@@ -77,7 +77,6 @@ class GameInterface:
 
         return player_stones_frame
 
-    # TODO: marcar como modelagem de algoritmo (o de main_menu_interface e initialize_player_stone_frame também)
     def initialize_frame(self) -> None:
         self.frame = ttk.Frame(self.root)
 
@@ -130,7 +129,7 @@ class GameInterface:
             position = self.board.get_stone_in_border_position()
             self.canvas_board.itemconfig(f"circle{position}", state=tk.NORMAL, image=self.assets["circle"])
             self.canvas_board.itemconfig(f"border{position}", state=tk.HIDDEN)
-            self.border_stone_button_info[1].grid(row=self.border_stone_button_info[0]+1, column=1-self.border_stone_button_info[2])
+            self.grid_border_stone_button()
             self.board.set_border_stone_info(None)
         self.board.receive_move(a_move)
 
@@ -210,11 +209,10 @@ class GameInterface:
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
             self.board.stone_selected(stone_value, in_left)
 
-    def verify_game_over(self) -> bool:
+    def verify_move_validity(self) -> bool:
         is_legal_move = self.board.get_is_legal_move()
         if is_legal_move:
-            # TODO: fazer diagrama de algoritmo
-            self.board.perform_game_over_verification()
+            self.board.verify_game_over()
             was_a_stone_button_pressed = self.was_a_stone_button_pressed()
             if was_a_stone_button_pressed:
                 self.pressed_button.configure(background="#d9d9d9")
@@ -227,15 +225,14 @@ class GameInterface:
         game_state = self.get_game_state()
         if game_state == GameState.LOCAL_PLAYER_TO_MOVE:
             self.board.position_selected(position_id)
-        # TODO: fazer diagrama de algoritmo
-        game_over = self.verify_game_over()
-        if game_over:
-            move_to_send = self.board.get_move_to_send()
-            self.update_board(move_to_send, True)
-            self.player_interface.send_move(move_to_send)
-            self.player_interface.update_gui()
-        else:
-            messagebox.showinfo(message="Jogada inválida. Tente novamente")
+            is_valid_move = self.verify_move_validity()
+            if is_valid_move:
+                move_to_send = self.board.get_move_to_send()
+                self.update_board(move_to_send, True)
+                self.player_interface.send_move(move_to_send)
+                self.player_interface.update_gui()
+            else:
+                messagebox.showinfo(message="Jogada inválida. Tente novamente")
 
     def get_move_type_from_move(self, move: dict[str, str]) -> MoveType:
         return MoveType[move["move_type"]]
@@ -252,12 +249,16 @@ class GameInterface:
         else:
             return False
 
+    def grid_border_stone_button(self) -> None:
+        self.border_stone_button_info[1].grid(row=self.border_stone_button_info[0]+1, column=1-self.border_stone_button_info[2])
+
     def update_board(self, move: dict[str, str], is_local_move: bool) -> None:
         stone_value = self.identify_stone_value_from_move(move)
         if is_local_move:
             stone_color = self.board.get_local_player_color()
         else:
             stone_color = self.board.get_remote_player_color()
+
         position = self.identify_position_from_move(move)
 
         is_stone_in_border = self.board.is_stone_in_border()
@@ -265,7 +266,7 @@ class GameInterface:
             stone_in_border_position = self.board.get_stone_in_border_position()
             self.canvas_board.itemconfig(f"circle{stone_in_border_position}", state=tk.NORMAL, image=self.assets["circle"])
             self.canvas_board.itemconfig(f"border{stone_in_border_position}", state=tk.HIDDEN)
-            self.border_stone_button_info[1].grid(row=self.border_stone_button_info[0]+1, column=1-self.border_stone_button_info[2])
+            self.grid_border_stone_button()
             self.board.set_border_stone_info(None)
 
         move_type = self.get_move_type_from_move(move)
@@ -281,7 +282,6 @@ class GameInterface:
             stone_button.update()
             self.canvas_board.itemconfig(f"circle{position}", image=self.assets[stone_color + str(stone_value)])
         else:
-            # Colocando pedra removida na borda
             removed_stone = self.board.get_removed_stone()
             border_stone_button_info = self.pop_stone_button_from_board(is_local_move, int(move["stone_value"]))
             self.set_border_stone_button_info(border_stone_button_info)
